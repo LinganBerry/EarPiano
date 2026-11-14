@@ -281,26 +281,25 @@
     const c = menor ? k.natural : k;
     if (!c || !c.scale || !c.scale.length) return { controles, detalles: [el('p', { className: 'vacio' }, 'No se pudo calcular esa tonalidad.')] };
     const relativa = menor ? k.relativeMajor : k.minorRelative;
-    const relativaTxt = menor ? relativa + ' mayor' : relativa + 'm (menor)';
+    const relativaTxt = menor ? relativa + ' mayor' : relativa + 'm';
     const alt = menor ? Key.majorKey(relativa).alteration : k.alteration;
-    const dom = Note.transpose(est.tonica, '5P'), sub = Note.transpose(est.tonica, '4P');
+    const dom = Note.transpose(est.tonica, '5P');
     const detalles = [
-      nota(armadura(alt)),
-      nota('Relativa: ' + relativaTxt + ' (comparten armadura). Paralela: ' + est.tonica + (menor ? ' mayor' : ' menor') + ' (misma tónica, otra armadura).'),
-      nota('Una quinta arriba: ' + dom + ' · una quinta abajo (cuarta arriba): ' + sub + '. Así se mueve el círculo de quintas.'),
+      nota(armadura(alt) + ' · Relativa: ' + relativaTxt),
       fichas(c.scale, c.grades.map(g => g.replace(/b/g, '♭').replace(/#/g, '♯')))
     ];
     const tri = c.triads;
-    detalles.push(el('div', { className: 'parte' }, el('h3', {}, 'Acordes de la tonalidad (' + (menor ? 'menor natural' : 'mayor') + ')'),
+    detalles.push(el('div', { className: 'parte' }, el('h3', {}, 'Acordes'),
       el('div', { className: 'chips' }, ...tri.map((a, i) => el('span', { className: 'chip' }, el('b', {}, a), el('i', { className: 'rom' }, romano(c.grades[i], a)), el('span', { className: 'fn' }, c.chordsHarmonicFunction[i]))))));
-    detalles.push(nota('T = tónica (reposo) · SD = subdominante (se aleja) · D = dominante (tensión que pide volver). En esta tonalidad, ' + tri[0] + ' es reposo, ' + tri[3] + ' se aleja y ' + tri[4] + ' pide resolver.'));
+    // Lo menos usado va plegado en "Más" (y recuerda si lo dejaste abierto).
     const sec = (c.secondaryDominants || []).map((d, i) => d && i !== 0 ? d + ' → ' + tri[i] : '').filter(Boolean);
-    if (sec.length) detalles.push(el('div', { className: 'parte' }, el('h3', {}, 'Dominantes secundarios'),
-      el('div', { className: 'chips' }, ...sec.map(t => el('span', { className: 'chip' }, el('b', {}, t)))),
-      nota('Cada uno es el acorde de séptima que "apunta" al segundo; se usa para dar impulso hacia ese acorde.')));
-    if (menor) detalles.push(el('div', { className: 'parte' }, el('h3', {}, 'Otras formas de la escala menor'),
-      nota('Armónica (7º grado subido): ' + k.harmonic.scale.join(' ')), nota('Melódica (subiendo): ' + k.melodic.scale.join(' ')),
-      nota('Por eso en menor el acorde V suele ser mayor: ' + dom + '.')));
+    const mas = [nota('T = reposo · SD = se aleja · D = pide resolver. El acorde disminuido (' + (menor ? 'ii°' : 'vii°') + ') no entra en el círculo.')];
+    if (sec.length) mas.push(el('div', { className: 'parte' }, el('h3', {}, 'Dominantes secundarios'), el('div', { className: 'chips' }, ...sec.map(t => el('span', { className: 'chip' }, el('b', {}, t))))));
+    if (menor) mas.push(el('div', { className: 'parte' }, el('h3', {}, 'Otras formas de la escala menor'),
+      nota('Armónica: ' + k.harmonic.scale.join(' ')), nota('Melódica (subiendo): ' + k.melodic.scale.join(' '))));
+    const det = el('details', { className: 'cq-mas', open: cqMasAbierto }, el('summary', {}, 'Más'), ...mas);
+    det.addEventListener('toggle', () => { cqMasAbierto = det.open; });
+    detalles.push(det);
     const acorde = a => alturas(Chord.get(a).notes, false);
     const cad = menor ? [tri[0], tri[3], dom, tri[0]] : [tri[0], tri[3], tri[4], tri[0]];
     const botones = [sonar('▶ Escala', alturas(c.scale, true), false),
@@ -315,6 +314,7 @@
   const CQ_ROM = { M: { M: ['IV', 'I', 'V'], m: ['ii', 'vi', 'iii'] }, m: { M: ['VI', 'III', 'VII'], m: ['iv', 'i', 'v'] } };
   const CQ_MAYOR = [['C', 'C'], ['G', 'G'], ['D', 'D'], ['A', 'A'], ['E', 'E'], ['B', 'B'], ['F#', 'F♯'], ['Db', 'D♭'], ['Ab', 'A♭'], ['Eb', 'E♭'], ['Bb', 'B♭'], ['F', 'F']];
   const CQ_MENOR = [['A', 'Am'], ['E', 'Em'], ['B', 'Bm'], ['F#', 'F♯m'], ['C#', 'C♯m'], ['G#', 'G♯m'], ['D#', 'D♯m'], ['Bb', 'B♭m'], ['F', 'Fm'], ['C', 'Cm'], ['G', 'Gm'], ['D', 'Dm']];
+  let cqMasAbierto = false;
   const CQ_C = 160, CQ_R = [152, 104, 64];   // centro del dibujo y radios: borde de afuera, entre anillos, centro
   const cqPunto = (r, grados) => { const a = grados * Math.PI / 180; return [(CQ_C + r * Math.cos(a)).toFixed(1), (CQ_C + r * Math.sin(a)).toFixed(1)]; };
   function cqSector(i, rFuera, rDentro) {
@@ -336,6 +336,10 @@
       const [tx, ty] = cqPunto(rTexto, i * 30 - 90);
       const g = sv('g', { class: 'cq-s ' + anillo + (sel ? ' sel' : '') + (vecina ? ' vec' : ''), role: 'button', tabindex: '0', 'aria-pressed': String(sel), 'aria-label': nombre },
         sv('path', { d: cqSector(i, rFuera, rDentro) }), sv('text', { x: tx, y: rom ? Number(ty) - (esMenor ? 5 : 6) : ty }, rotulo));
+      if (!esMenor) {                                           // franja fina con el color de ese tono (el mismo de las pastillas)
+        const arco = sv('path', { d: cqSector(i, rFuera - 1, rFuera - 8), class: 'cq-arco' });
+        arco.style.setProperty('--h', T.Note.chroma(valor) * 30); g.append(arco);
+      }
       if (rom) g.append(sv('text', { x: tx, y: Number(ty) + (esMenor ? 10 : 12), class: 'cq-r' }, rom));   // número romano, debajo del nombre
       g.addEventListener('click', elegir);
       g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); elegir(); } });
@@ -345,16 +349,15 @@
     sectores('cq-m', CQ_R[1], CQ_R[2], 84, true, CQ_MENOR);
     const mayor = CQ_MAYOR[pos][0], alt = T.Key.majorKey(mayor).alteration;
     const nombre = menor ? CQ_MENOR[pos][1] : CQ_MAYOR[pos][1];
-    svg.append(sv('text', { x: CQ_C, y: 140, class: 'cq-c' }, nombre), sv('text', { x: CQ_C, y: 168, class: 'cq-c2' }, cqArmadura(alt)), sv('text', { x: CQ_C, y: 192, class: 'cq-c3' }, 'armadura'));
+    const centro = sv('circle', { cx: CQ_C, cy: CQ_C, r: CQ_R[2] - 3, class: 'cq-centro' });
+    centro.style.setProperty('--h', T.Note.chroma(menor ? CQ_MENOR[pos][0] : mayor) * 30);       // el aro del centro lleva el color de la tonalidad
+    svg.append(centro, sv('text', { x: CQ_C, y: 140, class: 'cq-c' }, nombre), sv('text', { x: CQ_C, y: 168, class: 'cq-c2' }, cqArmadura(alt)), sv('text', { x: CQ_C, y: 192, class: 'cq-c3' }, 'armadura'));
     return svg;
   }
   function circulo() {
     const menor = est.cual === 'menor', pos = cqPosicion(est.tonica, menor);
     const t = tonalidades();   // mismos datos que la pestaña Tonalidades: armadura, relativa, acordes, dominantes y sonido
-    t.controles = [
-      el('p', { className: 'a' }, 'Toca una tonalidad: afuera las mayores, adentro sus relativas menores (misma armadura). Sus 6 acordes quedan juntos, con su número romano; el disminuido (' + (menor ? 'ii°' : 'vii°') + ') no entra. A la derecha sube una quinta (V) y a la izquierda baja una (IV). F♯ y G♭ son la misma tecla.'),
-      circuloSvg(pos, menor)
-    ];
+    t.controles = [circuloSvg(pos, menor), el('p', { className: 'a cq-leyenda' }, 'Toca una tonalidad · se iluminan sus 6 acordes')];
     return t;
   }
 

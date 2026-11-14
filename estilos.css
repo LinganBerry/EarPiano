@@ -348,9 +348,17 @@ body.presentando { overflow: hidden; }
   /* Círculo de quintas (Teoría → Círculo): sin sombras ni animaciones; el toque se nota con el color. */
   .cq { display: block; width: 100%; max-width: 22rem; margin: .4rem auto .8rem; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
   .cq-s { cursor: pointer; outline: none; }
-  .cq-s path { fill: var(--fila); stroke: var(--line); stroke-width: 1.5; }
-  .cq-s.vec path { fill: var(--fila2); }
-  .cq-s.sel path { fill: var(--ink); stroke: var(--ink); }
+  .cq-s path { fill: var(--fila); stroke: var(--bg); stroke-width: 2.5; }
+  .cq-s.vec path { fill: color-mix(in srgb, var(--accent) 16%, var(--fila2)); }
+  .cq-s.sel path { fill: var(--ink); }
+  /* franja fina con el color del tono (el mismo de las pastillas) y aro del centro con el color de la tonalidad elegida */
+  .cq-s path.cq-arco, .cq-s.vec path.cq-arco, .cq-s.sel path.cq-arco, .cq-s:active path.cq-arco { fill: hsl(var(--h) 62% 58%); stroke: none; pointer-events: none; }
+  .cq-centro { fill: var(--bg); stroke: hsl(var(--h) 62% 58%); stroke-width: 3; pointer-events: none; }
+  .cq-leyenda { margin: 0 0 .6rem; text-align: center; }
+  /* "Más" plegado en el círculo: lo menos usado, sin saturar la pantalla */
+  .cq-mas { margin: 1rem 0; }
+  .cq-mas > summary { display: flex; align-items: center; min-height: 44px; padding: 0 .8rem; border: 1px solid var(--line); border-radius: 10px; background: var(--fila2); font: 700 1rem var(--sans); cursor: pointer; }
+  .cq-mas[open] > summary { margin-bottom: .6rem; }
   .cq-s:active path { fill: var(--line); }
   .cq-s.sel:active path { fill: var(--ink); }
   .cq-s:focus-visible path { stroke: var(--accent); stroke-width: 4; }
