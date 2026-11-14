@@ -175,7 +175,7 @@ test('TEORÍA: abrir, calcular tonalidades (armadura, relativa, acordes) y cerra
   await esperar(() => /Sin alteraciones/.test(t.textContent), 'C mayor: sin alteraciones');
   toca('A mayor');
   await esperar(() => /3 sostenidos: F♯ C♯ G♯/.test(t.textContent), 'A mayor: 3 sostenidos');
-  assert.match(t.textContent, /Relativa: F#m \(menor\)/);
+  assert.match(t.textContent, /Relativa: F#m/); assert.doesNotMatch(t.textContent, /Relativa: F#m \(menor\)/, 'texto corto');
   assert.equal(t.querySelectorAll('.parte .chips .chip').length >= 7, true);
   toca('A menor');
   await esperar(() => /A menor/.test(t.querySelector('h2').textContent), 'A menor');
@@ -763,7 +763,19 @@ test('TEORÍA · Círculo de quintas: se elige una tonalidad tocando, sus 6 acor
   await esperar(() => sel()[0] === 'G mayor', 'se elige G');
   assert.deepEqual(vec(), ['A menor', 'B menor', 'C mayor', 'D mayor', 'E menor']);   // G mayor: IV V arriba; ii vi iii abajo
   assert.equal(t.querySelector('.cq-c2').textContent, '1♯');
-  assert.match(t.textContent, /Relativa: Em \(menor\)/);
+  assert.match(t.textContent, /Relativa: Em/);
+  // Menos texto: lo largo de antes ya no está y lo menos usado queda plegado en "Más" (recordando si lo abres)
+  for (const largo of [/Paralela/, /Una quinta arriba/, /T = tónica/, /Toca una tonalidad: afuera/]) assert.doesNotMatch(t.textContent, largo, String(largo));
+  assert.match(t.textContent, /Toca una tonalidad · se iluminan sus 6 acordes/);
+  assert.equal(t.querySelectorAll('.cq-arco').length, 12, 'franja de color en las 12 mayores'); assert.ok(t.querySelector('.cq-centro'));
+  const mas = t.querySelector('details.cq-mas');
+  assert.ok(mas && !mas.open && mas.querySelector('summary').textContent === 'Más', 'Más plegado'); assert.match(mas.textContent, /Dominantes secundarios/);
+  mas.open = true; mas.dispatchEvent(new n.w.Event('toggle'));
+  t.querySelector('[aria-label="D mayor"]').dispatchEvent(new n.w.Event('click', { bubbles: true }));
+  await esperar(() => /D mayor/.test(t.querySelector('h2').textContent), 'D mayor');
+  assert.equal(t.querySelector('details.cq-mas').open, true, 'si lo abriste, sigue abierto al cambiar de tonalidad');
+  t.querySelector('[aria-label="G mayor"]').dispatchEvent(new n.w.Event('click', { bubbles: true }));
+  await esperar(() => /G mayor/.test(t.querySelector('h2').textContent), 'G mayor otra vez');
   assert.ok(boton('▶ I–IV–V–I', t), 'sigue habiendo sonido');
   assert.ok(t.querySelector('svg.teclado'), 'y el teclado con las notas');
 
