@@ -452,7 +452,7 @@
 
   let iniPuesta = ''; // el icono de la pestaña solo se rehace si cambia la letra, no en cada tecla
   function render() {
-    document.title = data.nombre || NOMBRE;
+    document.title = data.nombre && data.nombre !== NOMBRE ? data.nombre + ' · ' + NOMBRE : NOMBRE;      // p. ej. "Zaenlly · Acordes y Tonos"
     $('titulo').textContent = data.nombre || NOMBRE;
     // La letra de la ficha y del icono de la pestaña salen de la primera letra del nombre (Ajustes → Página).
     const ini = ((data.nombre || NOMBRE).match(/[0-9A-Za-zÀ-ÿ]/) || ['R'])[0].toUpperCase();
@@ -513,7 +513,7 @@
   const avisoRed = () => {
     const a = $('sin-red');
     a.hidden = !copia;
-    a.textContent = copia ? 'Sin conexión o conexión lenta: se muestra la copia guardada en este dispositivo' + (data.actualizado ? ' (actualizada: ' + data.actualizado + ')' : '') + '. Se actualiza sola al volver la señal.' : '';
+    a.textContent = copia ? 'Sin conexión o muy lenta: se usa la copia guardada' + (data.actualizado ? ' (último cambio: ' + data.actualizado + ')' : '') + '. Se actualiza sola al volver la señal.' : '';
   };
   async function cargar(inicial = true) {
     if (inicial) $('cuenta').textContent = '…';

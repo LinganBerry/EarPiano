@@ -127,7 +127,7 @@
   .marca h1 { margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: clamp(1.3rem, 6.2vw, 1.8rem); }
   .logo { flex: none; display: inline-flex; flex-direction: column; align-items: center; padding: .2rem .6rem .25rem; border: 1.5px solid var(--ink); border-radius: 4px; }
   .logo b { font: 700 1.55rem/1.1 var(--tit); }
-  .logo .rom { font: 400 .7rem/1 var(--sans); font-style: normal; color: var(--muted); }
+  .logo .rom { font: 700 .85rem/1 var(--sans); font-style: normal; color: var(--ink); }
   #franja { display: flex; height: 6px; margin: .7rem 0 1rem; }
   #franja span { flex: 1; background: hsl(var(--h) var(--s) var(--pl)); }
   .rom { font: 400 calc(.8rem * var(--z))/1.1 var(--sans); color: var(--muted); }
