@@ -195,7 +195,8 @@ test('SIN CONEXIÓN: muestra el aviso de copia y lo quita al volver la señal', 
   const n = await navegador('', red);
   const { d, $, w } = n;
   assert.equal($('sin-red').hidden, false);
-  assert.match($('sin-red').textContent, /copia guardada/);
+  assert.match($('sin-red').textContent, /copia guardada/); assert.doesNotMatch($('sin-red').textContent, /actualizada:/);
+  assert.match($('sin-red').textContent, /Se actualiza sola al volver la señal/);
   assert.equal(d.querySelectorAll('#lista .fila').length, 1, 'la copia muestra las canciones');
   red.copia = false; w.dispatchEvent(new w.Event('online'));
   await esperar(() => $('sin-red').hidden, 'que el aviso desaparezca al volver la señal');
@@ -989,6 +990,21 @@ test('PRACTICAR · menú ordenado: Hoy, Retos y Herramientas arriba; los temas s
   n.boton('← Practicar', n.$('practica')).click(); await esperar(() => n.$('pr-g-temas'), 'vuelve al menú');
   assert.equal(n.$('pr-g-temas').open, true, 'sigue abierto si lo habías abierto');
   sinErrores(n); n.cerrar();
+});
+
+test('ENCABEZADO: el nombre del sitio sale en la pestaña junto al de la app, el logo toma su inicial y el aviso sin conexión dice "último cambio"', async () => {
+  memoria.clear(); sembrar([['Aquí estás', 'A', ['Coro', 'A E F#m D']]]);
+  const doc = JSON.parse(memoria.get('repertorio/canciones.json').texto); doc.nombre = 'Zaenlly'; doc.intro = 'Santo sea Jesús'; doc.actualizado = '8 de noviembre de 2026';
+  memoria.set('repertorio/canciones.json', { texto: JSON.stringify(doc), etag: '"e1"' });
+  const n = await navegador('');
+  await esperar(() => n.$('titulo').textContent === 'Zaenlly', 'nombre del sitio');
+  assert.equal(n.d.title, 'Zaenlly · Acordes y Tonos'); assert.equal(n.$('logo-l').textContent, 'Z'); assert.equal(n.$('intro').textContent, 'Santo sea Jesús');
+  n.cerrar();
+  memoria.clear(); sembrar([['Aquí estás', 'A', ['Coro', 'A E F#m D']]]);                 // sin nombre propio: solo el de la app
+  const m = await navegador('');
+  await esperar(() => m.d.querySelectorAll('#lista .fila').length === 1, 'lista');
+  assert.equal(m.d.title, 'Acordes y Tonos'); assert.equal(m.$('titulo').textContent, 'Acordes y Tonos');
+  m.cerrar();
 });
 
 test('TEORÍA · Escalas: 12 tónicas (una por tono), nombre más limpio, 5 otras escalas útiles y solo el crédito del piano', async () => {
