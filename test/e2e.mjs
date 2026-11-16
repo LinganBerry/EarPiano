@@ -40,6 +40,7 @@ async function navegador(busqueda = '', red = {}) {
   const dom = new JSDOM(html, {
     url: 'http://prueba.local/' + busqueda, runScripts: 'dangerously', resources: { interceptors: [interceptor] }, pretendToBeVisual: true, virtualConsole: vc,
     beforeParse(w) {
+      if (red.antes) red.antes(w);                       // para preparar el dispositivo antes de que cargue la página (datos guardados, etc.)
       w.matchMedia = () => ({ matches: false, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} });
       w.fetch = async (url, opts = {}) => {
         if (red.caido) throw new TypeError('sin red');
@@ -1005,6 +1006,40 @@ test('ENCABEZADO: el nombre del sitio sale en la pestaña junto al de la app, el
   await esperar(() => m.d.querySelectorAll('#lista .fila').length === 1, 'lista');
   assert.equal(m.d.title, 'Acordes y Tonos'); assert.equal(m.$('titulo').textContent, 'Acordes y Tonos');
   m.cerrar();
+});
+
+test('DATOS GUARDADOS: dañados, de versiones viejas o con tipos raros no rompen la página ni Practicar', async () => {
+  memoria.clear(); sembrar([['Aleluya', 'G', ['Coro', 'G D Em C']]]);
+  const RAROS = [null, 7, true, 'texto', '{"servidor":[', [], [1, 2, 3], {}, { servidor: 5, pend: 'x', apartadas: {} }, { servidor: [null, 3, {}], pend: [{ id: 1 }], apartadas: [null] }, { nivel: 5 }, { nivel: [1] }, { nivel: { sol: 'a', fa: null, xx: 9 } }];
+  for (const clave of ['repertorio-practica-v1', 'repertorio-practica-pref', 'repertorio-retos-v1', 'repertorio-timer-v1']) for (const v of RAROS) {
+    const n = await navegador('', { antes: w => w.localStorage.setItem(clave, typeof v === 'string' ? v : JSON.stringify(v)) });
+    await abrirPractica(n);
+    n.$('pr-stats-ir').click(); await esperar(() => n.$('pr-stats'), 'estadísticas con ' + clave);
+    assert.deepEqual(n.errores, [], `${clave} = ${JSON.stringify(v)}\n` + n.errores.join('\n'));
+    n.cerrar();
+  }
+});
+
+test('NIVELES GUARDADOS: los de antes de quitar los niveles fáciles se convierten y los que ya no existen se corrigen', async () => {
+  memoria.clear();
+  const nivelEn = (n, tema) => n.d.querySelector(`[data-tema="${tema}"] [aria-pressed="true"]`)?.textContent.trim().split(' ')[0];
+  // sin versión = de antes: sol 5 (con alteraciones) -> 2; intervalos 4 (todos) -> 3; intervalos 1 se queda en 1; fa no cambia; un tema que no existe se descarta
+  let n = await navegador('', { antes: w => w.localStorage.setItem('repertorio-practica-pref', JSON.stringify({ nivel: { sol: 5, 'int-asc': 4, 'int-desc': 1, fa: 3, xx: 2 } })) });
+  await abrirPractica(n);
+  assert.deepEqual(['sol', 'int-asc', 'int-desc', 'fa'].map(t => nivelEn(n, t)), ['2', '3', '1', '3']);
+  assert.deepEqual(JSON.parse(n.w.localStorage.getItem('repertorio-practica-pref')), { v: 2, nivel: { sol: 2, 'int-asc': 3, 'int-desc': 1, fa: 3 } }, 'se guarda ya convertido (y una sola vez)');
+  sinErrores(n); n.cerrar();
+  // ya convertidas (v: 2) no se vuelven a bajar; las que se salen del rango pasan al nivel más alto; las raras vuelven al 1
+  n = await navegador('', { antes: w => w.localStorage.setItem('repertorio-practica-pref', JSON.stringify({ v: 2, nivel: { sol: 2, 'int-asc': 99, fa: 'x', 'int-arm': 2.5 } })) });
+  await abrirPractica(n);
+  assert.deepEqual(['sol', 'int-asc', 'fa', 'int-arm'].map(t => nivelEn(n, t)), ['2', '3', '1', '1']);
+  // y se puede practicar de verdad en esos niveles (sol 2 con alteraciones, intervalos 3 con todos)
+  await empezarTema(n, 'sol', 10);
+  assert.ok(n.w.RepertorioPractica.estadoSesion().preg, 'sale una pregunta de sol'); n.w.history.back();
+  await esperar(() => n.$('pr-diaria'), 'vuelve al menú');
+  await empezarTema(n, 'int-asc', 10);
+  assert.ok(n.w.RepertorioPractica.estadoSesion().preg, 'sale un intervalo');
+  assert.deepEqual(n.errores, [], n.errores.join('\n')); n.cerrar();
 });
 
 test('TEORÍA · Escalas: 12 tónicas (una por tono), nombre más limpio, 5 otras escalas útiles y solo el crédito del piano', async () => {
