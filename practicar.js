@@ -24,8 +24,14 @@
   // --- estado y sincronización ---
   // servidor: lo último que se sabe del servidor; pend: sesiones hechas aquí que el servidor aún no confirmó.
   // apartadas: sesiones que el servidor rechazó por no ser válidas; se guardan aquí (no se pierden) pero ya no bloquean el envío.
-  const datos = leer(GUARDADO, { servidor: [], pend: [], apartadas: [] });
-  if (!Array.isArray(datos.apartadas)) datos.apartadas = [];
+  // Lo guardado puede venir dañado o de una versión vieja: se acepta solo lo que tiene la forma esperada y lo demás se descarta.
+  const esSesion = s => !!s && typeof s === 'object' && typeof s.id === 'string' && typeof s.t === 'string' && Array.isArray(s.q);
+  const crudo = leer(GUARDADO, null), datos = { servidor: [], pend: [], apartadas: [] };
+  if (crudo && typeof crudo === 'object') {
+    if (Array.isArray(crudo.servidor)) datos.servidor = crudo.servidor.filter(esSesion);
+    if (Array.isArray(crudo.pend)) datos.pend = crudo.pend.filter(esSesion);
+    if (Array.isArray(crudo.apartadas)) datos.apartadas = crudo.apartadas.filter(s => !!s && typeof s === 'object');
+  }
   const persistir = () => guardar(GUARDADO, { servidor: datos.servidor.slice(-500), pend: datos.pend.slice(-200), apartadas: datos.apartadas.slice(-50) });
   const todas = () => { const m = new Map(); for (const s of [...datos.servidor, ...datos.pend]) m.set(s.id, s); return [...m.values()]; };
   let sync = { estado: datos.pend.length ? 'pendiente' : 'local', texto: '' };
@@ -93,8 +99,22 @@
   let ses = null, origenFoco = null, temporizador = null, mod = 0, pantalla = 'inicio', modRetos = null;   // modRetos: Retos o Progresiones, el que esté abierto
   let yInicio = 0;   // hasta dónde habías bajado en el menú; al volver de una sesión, lección o estadísticas regresas ahí
   const dejarInicio = () => { if (pantalla === 'inicio') yInicio = caja.scrollTop; };
-  const pref = leer(PREF, { nivel: {} });
-  const nivelDe = t => pref.nivel[t] || 1;
+  // Nivel elegido en cada tema. Se lee con cuidado (puede venir dañado) y, si es de antes de quitar los niveles muy fáciles
+  // (Clave de sol 1-3 e Intervalos nivel 1), se baja en esa cantidad para que siga siendo el mismo ejercicio.
+  const VERSION_NIVELES = 2, QUITADOS = { sol: 3, 'int-asc': 1, 'int-desc': 1, 'int-arm': 1 };
+  const pref = (() => {
+    const g = leer(PREF, null), p = { v: VERSION_NIVELES, nivel: {} };
+    if (!g || typeof g !== 'object' || !g.nivel || typeof g.nivel !== 'object' || Array.isArray(g.nivel)) return p;
+    for (const [t, v] of Object.entries(g.nivel)) {
+      const T = N.TEMAS[t];
+      if (!T || !Number.isInteger(v)) continue;
+      const nv = Math.max(1, v - (g.v === VERSION_NIVELES ? 0 : QUITADOS[t] || 0));
+      p.nivel[t] = T.niveles.some(x => x.id === nv) ? nv : T.niveles[T.niveles.length - 1].id;      // si ya no existe, el más alto
+    }
+    if (g.v !== VERSION_NIVELES) guardar(PREF, p);
+    return p;
+  })();
+  const nivelDe = t => { const T = N.TEMAS[t], v = pref.nivel[t]; return T && T.niveles.some(x => x.id === v) ? v : 1; };
   const pct = x => (x == null ? '—' : Math.round(x * 100) + '%');
   const mmss = ms => { const s = Math.round(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
   const barra = (izq, centro) => el('div', { className: 'cbarra' }, izq, el('span', { className: 'ctitulo' }, centro));

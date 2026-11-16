@@ -349,7 +349,7 @@ body.presentando { overflow: hidden; }
   .cq { display: block; width: 100%; max-width: 22rem; margin: .4rem auto .8rem; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
   .cq-s { cursor: pointer; outline: none; }
   .cq-s path { fill: var(--fila); stroke: var(--bg); stroke-width: 2.5; }
-  .cq-s.vec path { fill: color-mix(in srgb, var(--accent) 16%, var(--fila2)); }
+  .cq-s.vec path { fill: var(--fila2); fill: color-mix(in srgb, var(--accent) 16%, var(--fila2)); }      /* la primera línea es para celulares viejos que no entienden color-mix */
   .cq-s.sel path { fill: var(--ink); }
   /* franja fina con el color del tono (el mismo de las pastillas) y aro del centro con el color de la tonalidad elegida */
   .cq-s path.cq-arco, .cq-s.vec path.cq-arco, .cq-s.sel path.cq-arco, .cq-s:active path.cq-arco { fill: hsl(var(--h) 62% 58%); stroke: none; pointer-events: none; }
