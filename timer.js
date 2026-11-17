@@ -1,8 +1,8 @@
 // Puente con TimerPiano (tu otra app de práctica: bloques aleatorios con micro-pausas, https://zaenlly1.vercel.app/).
 // Sin cuentas ni servidores nuevos: las dos apps se pasan los datos por el enlace.
-//   TimerPiano -> Acordes y Tonos: al terminar una sesión, TimerPiano ofrece un botón que abre esta página con
+//   TimerPiano -> EarPiano: al terminar una sesión, TimerPiano ofrece un botón que abre esta página con
 //     "#timer=ID.FECHA.s-h-o-t" (segundos por área). Aquí se valida, se guarda en este dispositivo (sin repetir) y se avisa.
-//   Acordes y Tonos -> TimerPiano: la fila "TimerPiano" de Practicar abre la otra app con "#plan=solfeo-5,oido-5"
+//   EarPiano -> TimerPiano: la fila "TimerPiano" de Practicar abre la otra app con "#plan=solfeo-5,oido-5"
 //     (minutos sugeridos por área; ella los pone y tú le das a empezar).
 // La lógica (leer el enlace, sumar, racha) no usa el DOM y se prueba en test/. Lo guardado vive en localStorage.
 (function (raiz) {

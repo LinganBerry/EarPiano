@@ -6,7 +6,7 @@
   const NOTAS = { C: 0, 'C#': 1, Db: 1, D: 2, 'D#': 3, Eb: 3, E: 4, F: 5, 'F#': 6, Gb: 6, G: 7, 'G#': 8, Ab: 8, A: 9, 'A#': 10, Bb: 10, B: 11 };
 
   // Nombre por defecto de la página (si en Ajustes → Página no hay otro). Debe coincidir con <title> de index.html.
-  const NOMBRE = 'Acordes y Tonos';
+  const NOMBRE = 'EarPiano';
   const $ = id => document.getElementById(id);
   const clone = o => JSON.parse(JSON.stringify(o));
   const norm = s => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -452,7 +452,7 @@
 
   let iniPuesta = ''; // el icono de la pestaña solo se rehace si cambia la letra, no en cada tecla
   function render() {
-    document.title = data.nombre && data.nombre !== NOMBRE ? data.nombre + ' · ' + NOMBRE : NOMBRE;      // p. ej. "Zaenlly · Acordes y Tonos"
+    document.title = data.nombre && data.nombre !== NOMBRE ? data.nombre + ' · ' + NOMBRE : NOMBRE;      // p. ej. "Zaenlly · EarPiano"
     $('titulo').textContent = data.nombre || NOMBRE;
     // La letra de la ficha y del icono de la pestaña salen de la primera letra del nombre (Ajustes → Página).
     const ini = ((data.nombre || NOMBRE).match(/[0-9A-Za-zÀ-ÿ]/) || ['R'])[0].toUpperCase();

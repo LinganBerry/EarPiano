@@ -10,7 +10,7 @@ export function construir(copia) {
     .filter(c => !c?.borrada)
     .map(c => ({ ...(idValido(c?.id) ? { id: c.id } : {}), ...limpiarCancion(c) }))
     .filter(c => c.titulo && c.tono);
-  return { version: 2, nombre: texto(copia?.nombre, 120) || 'Acordes y Tonos', intro: texto(copia?.intro, 300), actualizado: '', canciones };
+  return { version: 2, nombre: texto(copia?.nombre, 120) || 'EarPiano', intro: texto(copia?.intro, 300), actualizado: '', canciones };
 }
 export const archivoJs = datos =>
   '// Copia de respaldo. La página usa los datos guardados en el servidor; este archivo solo se usa si el\n' +
