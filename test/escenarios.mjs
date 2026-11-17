@@ -1,4 +1,4 @@
-// Recorridos completos y escenarios raros de Acordes y Tonos, en un navegador simulado (jsdom).
+// Recorridos completos y escenarios raros de EarPiano, en un navegador simulado (jsdom).
 // Ejecutar: npm i --no-save jsdom@30 && npm run test:escenarios
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -63,7 +63,7 @@ test('RECORRIDO COMPLETO: abrir, buscar una canción, practicar (lectura con rit
   assert.match($('pr-resultado').textContent, /8 de 10 · 80%/);
 
   const h = new Date(), f = `${h.getFullYear()}-${String(h.getMonth() + 1).padStart(2, '0')}-${String(h.getDate()).padStart(2, '0')}`;
-  w.location.hash = `#timer=abc123def456.${f}.300-120-0-60`;   // lo que manda el botón "Sumar a Acordes y Tonos" de TimerPiano
+  w.location.hash = `#timer=abc123def456.${f}.300-120-0-60`;   // lo que manda el botón "Sumar a EarPiano" de TimerPiano
   await esperar(() => aviso(n), 'aviso de TimerPiano');
   assert.equal(aviso(n), 'TimerPiano: se sumaron 8 min a tu práctica.');
   $('pr-stats-ir') && $('pr-stats-ir').click();

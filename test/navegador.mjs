@@ -39,7 +39,7 @@ export const esperar = async (cond, que, ms = 6000) => {
 export const sinErrores = n => assert.deepEqual(n.errores, [], 'errores de JavaScript en la página:\n' + n.errores.join('\n'));
 
 export function sembrar(lista) {
-  memoria.set('repertorio/canciones.json', { texto: JSON.stringify({ version: 2, nombre: 'Acordes y Tonos', intro: '', canciones: lista.map(([t, tono, ...partes], i) => ({ id: 'id' + i + 'x' + t.length, titulo: t, artista: 'Artista ' + i, tono, partes: partes.map(([nombre, prog]) => ({ nombre, tono: '', prog, letra: '', pista: '' })) })) }), etag: '"e0"' });
+  memoria.set('repertorio/canciones.json', { texto: JSON.stringify({ version: 2, nombre: 'EarPiano', intro: '', canciones: lista.map(([t, tono, ...partes], i) => ({ id: 'id' + i + 'x' + t.length, titulo: t, artista: 'Artista ' + i, tono, partes: partes.map(([nombre, prog]) => ({ nombre, tono: '', prog, letra: '', pista: '' })) })) }), etag: '"e0"' });
 }
 
 export async function navegador(busqueda = '', red = {}) {

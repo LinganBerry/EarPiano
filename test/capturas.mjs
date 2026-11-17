@@ -11,7 +11,7 @@ try { ({ chromium } = await import('playwright')); } catch { console.error('Falt
 const RAIZ = fileURLToPath(new URL('..', import.meta.url)), SALIDA = join(RAIZ, 'capturas'), ANCHO = 360, ALTO = 740;
 const TIPOS = { '.js': 'application/javascript', '.css': 'text/css', '.html': 'text/html', '.json': 'application/json', '.woff2': 'font/woff2', '.png': 'image/png', '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json' };
 const parte = (nombre, prog) => ({ nombre, tono: '', prog, letra: 'La la la la\nLa la la', pista: '' });
-const CANCIONES = { version: 2, nombre: 'Acordes y Tonos', intro: '', canciones: [
+const CANCIONES = { version: 2, nombre: 'EarPiano', intro: '', canciones: [
   { id: 'id0aleluya', titulo: 'Aleluya', artista: 'Artista A', tono: 'C', partes: [parte('Verso', 'C Am | C Am | F G | C G'), parte('Coro', 'F G | Em Am | F G | C')] },
   { id: 'id1grande', titulo: 'Cuán grande es Él', artista: 'Artista B', tono: 'G', partes: [parte('Verso', 'G D | Em C'), parte('Coro', 'C G | D Em')] },
   { id: 'id2santo', titulo: 'Santo', artista: 'Artista C', tono: 'D', partes: [parte('Verso', 'D A | Bm G')] }] };

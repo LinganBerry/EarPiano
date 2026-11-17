@@ -69,8 +69,9 @@ const sinErrores = n => assert.deepEqual(n.errores, [], 'errores de JavaScript e
 test('estructura de index.html: etiquetas, un solo h1, OG, manifest y salto al contenido', async () => {
   const html = await readFile(join(RAIZ, 'index.html'), 'utf8');
   assert.equal((html.match(/<h1\b/g) || []).length, 1);
-  for (const f of [/<html lang="es"/, /name="description"/, /property="og:image" content="https:\/\/[^"]+\/og\.png"/, /rel="manifest"/, /rel="apple-touch-icon"/, /class="saltar"/, /id="practica-btn"/, /src="notacion\.js"/, /src="practicar\.js"/, /id="q"[^>]*aria-label=/, /viewport-fit=cover/, /noindex/])
+  for (const f of [/<html lang="es"/, /name="description"/, /property="og:title" content="EarPiano"/, /rel="manifest"/, /rel="apple-touch-icon"/, /class="saltar"/, /id="practica-btn"/, /src="notacion\.js"/, /src="practicar\.js"/, /id="q"[^>]*aria-label=/, /viewport-fit=cover/, /noindex/])
     assert.match(html, f, String(f));
+  assert.doesNotMatch(html, /og:image|twitter:image/, 'sin imágenes de vista previa para compartir');
   assert.doesNotMatch(html, /\sstyle=/, 'sin estilos en línea (la CSP los bloquea)');
   const m = JSON.parse(await readFile(join(RAIZ, 'manifest.webmanifest'), 'utf8'));
   for (const i of m.icons) assert.ok(await readFile(join(RAIZ, i.src)), 'existe ' + i.src);
@@ -638,7 +639,7 @@ test('RETOS DE ACORDES: tiempo por acorde (al acabarse cuenta como fallo y muest
 });
 
 // Estas pruebas reemplazan los datos del almacén falso: van al final para no alterar a las demás.
-const sembrar = lista => memoria.set('repertorio/canciones.json', { texto: JSON.stringify({ version: 2, nombre: 'Acordes y Tonos', intro: '', canciones: lista.map(([t, tono, ...partes], i) => ({ id: 'id' + i + 'x' + t.length, titulo: t, artista: 'Artista ' + i, tono, partes: partes.map(([nombre, prog]) => ({ nombre, tono: '', prog, letra: '', pista: '' })) })) }), etag: '"e0"' });
+const sembrar = lista => memoria.set('repertorio/canciones.json', { texto: JSON.stringify({ version: 2, nombre: 'EarPiano', intro: '', canciones: lista.map(([t, tono, ...partes], i) => ({ id: 'id' + i + 'x' + t.length, titulo: t, artista: 'Artista ' + i, tono, partes: partes.map(([nombre, prog]) => ({ nombre, tono: '', prog, letra: '', pista: '' })) })) }), etag: '"e0"' });
 
 test('CANCIÓN: canciones con la misma progresión, clickeables, con "Volver a" y sin callejón sin salida', async () => {
   memoria.clear();
@@ -999,12 +1000,12 @@ test('ENCABEZADO: el nombre del sitio sale en la pestaña junto al de la app, el
   memoria.set('repertorio/canciones.json', { texto: JSON.stringify(doc), etag: '"e1"' });
   const n = await navegador('');
   await esperar(() => n.$('titulo').textContent === 'Zaenlly', 'nombre del sitio');
-  assert.equal(n.d.title, 'Zaenlly · Acordes y Tonos'); assert.equal(n.$('logo-l').textContent, 'Z'); assert.equal(n.$('intro').textContent, 'Santo sea Jesús');
+  assert.equal(n.d.title, 'Zaenlly · EarPiano'); assert.equal(n.$('logo-l').textContent, 'Z'); assert.equal(n.$('intro').textContent, 'Santo sea Jesús');
   n.cerrar();
   memoria.clear(); sembrar([['Aquí estás', 'A', ['Coro', 'A E F#m D']]]);                 // sin nombre propio: solo el de la app
   const m = await navegador('');
   await esperar(() => m.d.querySelectorAll('#lista .fila').length === 1, 'lista');
-  assert.equal(m.d.title, 'Acordes y Tonos'); assert.equal(m.$('titulo').textContent, 'Acordes y Tonos');
+  assert.equal(m.d.title, 'EarPiano'); assert.equal(m.$('titulo').textContent, 'EarPiano');
   m.cerrar();
 });
 
