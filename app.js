@@ -48,7 +48,7 @@
     b.setAttribute('aria-label', texto);
     b.title = texto;
     const meta = document.querySelector('meta[name=theme-color]');
-    if (meta) meta.content = t === 'papel' ? '#faf6ee' : '#1c1c1e';
+    if (meta) meta.content = t === 'papel' ? '#f1eef9' : '#07051a';
   }
   aplicarTema(guardado() || (matchMedia('(prefers-color-scheme: dark)').matches ? 'escenario' : 'papel'));
   $('tema').addEventListener('click', () => {
