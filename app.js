@@ -235,7 +235,7 @@
     mostrar();
     $('cancion').scrollTop = 0;
   }
-  const VISIBLES_REL = 4;
+  const VISIBLES_REL = 3;   // antes 4: el bloque ocupaba demasiado
   const bloqueRelacionadas = c => {
     const rel = window.Analisis ? window.Analisis.relacionadas(c, data.canciones) : [];
     if (!rel.length) return null;

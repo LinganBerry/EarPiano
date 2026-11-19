@@ -645,3 +645,23 @@ body.presentando { overflow: hidden; }
 .parte h3 { font-size: calc(.8rem * var(--z, 1)); }
 .chips, .compas { gap: calc(.55rem * var(--z, 1)); }
 .parte { padding: calc(.85rem * var(--z, 1)) calc(1rem * var(--z, 1)) calc(1rem * var(--z, 1)); }
+
+/* --- Acordes: cuadros un poco más compactos --- */
+.parte { margin: .8rem 0; padding: calc(.7rem * var(--z, 1)) calc(.85rem * var(--z, 1)) calc(.8rem * var(--z, 1)); }
+.parte h3 { margin-bottom: .55rem; }
+.chips, .compas { gap: calc(.4rem * var(--z, 1)); }
+.chip { min-width: calc(3.1rem * var(--z, 1)); min-height: calc(2.9rem * var(--z, 1)); padding: calc(.2rem * var(--z, 1)) calc(.6rem * var(--z, 1)); font-size: calc(1.25rem * var(--z, 1)); }
+.chip .rom { margin-top: .05rem; font-size: calc(.74rem * var(--z, 1)); }
+
+/* --- "Canciones con la misma progresión": compacto, sin tarjetas dentro de la tarjeta --- */
+.rel { margin: .8rem 0 0; padding: .6rem .8rem .5rem; }
+.rel h3 { margin: 0 0 .15rem; font-size: .74rem; }
+.rel > .a { margin: 0 0 .3rem; font-size: .8rem; line-height: 1.35; }
+.rel .fila { margin: 0; padding: 0 0 0 0; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: none; box-shadow: none; content-visibility: visible; }
+.rel .fila:active { transform: none; background: var(--fila); }
+.rel .abrir { min-height: 52px; padding: .45rem 0; }
+.rel .abrir .t { display: block; font-size: 1rem; }
+.rel .abrir .a { display: inline; margin: 0; font-size: .82rem; }
+.rel .abrir .a + .a::before { content: " · "; }
+.rel .fila > .tono { min-width: 2.6rem; min-height: 2.1rem; font-size: .95rem; border-radius: 10px; }
+.rel-mas, .volver-rel { min-height: 44px; margin-top: .25rem; font-size: .92rem; }
