@@ -20,6 +20,7 @@ export const { memoria } = await import('./blob-falso.mjs');
 const canciones = await import('../api/canciones.js');
 const entrar = await import('../api/entrar.js');
 const progreso = await import('../api/progreso.js');
+const timer = await import('../api/timer.js');
 
 export const RAIZ = fileURLToPath(new URL('..', import.meta.url));
 export const PASE = process.env.ADMIN_PASSWORD;
@@ -82,6 +83,7 @@ export async function navegador(busqueda = '', red = {}) {
         if (u.pathname === '/api/canciones') r = opts.method === 'POST' ? await canciones.POST(req()) : await canciones.GET();
         else if (u.pathname === '/api/entrar') r = await entrar.POST(req());
         else if (u.pathname === '/api/progreso') r = await progreso.POST(req());
+        else if (u.pathname === '/api/timer') r = await timer.POST(req());
         else return new Response('no existe', { status: 404 });
         if (red.copia && r.ok) { const h = new Headers(r.headers); h.set('X-Copia', '1'); return new Response(await r.text(), { status: r.status, headers: h }); }
         return r;

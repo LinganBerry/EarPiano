@@ -223,3 +223,36 @@ test('PASAR LA MEDIANOCHE en medio de una sesión: se guarda entera en un solo d
     sinErrores(n); n.cerrar();
   } finally { process.env.TZ = antes; if (antes === undefined) delete process.env.TZ; }
 });
+
+test('TOTALES DE TIMERPIANO (almacén compartido): con tu pase, Practicar muestra lo que dejó TimerPiano sin sumar sesión por sesión; sin red usa la última copia; si algo falla vuelve a lo del enlace', async () => {
+  const antes = process.env.TZ; process.env.TZ = 'America/Santo_Domingo';
+  try {
+    const { PASE } = await import('./navegador.mjs');
+    const contrato = JSON.parse(await (await import('node:fs/promises')).readFile(new URL('./contrato-puente.json', import.meta.url), 'utf8'));
+    const reloj = { ms: Date.UTC(2026, 10, 16, 18, 0, 0) };                      // 14:00 del 16 de noviembre en Santo Domingo
+    const ponerTotales = t => memoria.set('timerpiano/totales.json', { texto: typeof t === 'string' ? t : JSON.stringify(t), etag: '"t' + Math.random() + '"' });
+    const entrar = async n => { const { j } = await n.w.RepertorioLocal.enviar('/api/entrar', { clave: PASE }); n.w.RepertorioLocal.guardarPase(j.token, false); return j.token; };
+
+    memoria.clear(); ponerTotales(contrato.totales.archivo);
+    const n = await navegador('', { reloj }); const token = await entrar(n);
+    await abrirPractica(n);
+    await esperar(() => /Hoy: 13 min/.test(n.$('pr-timer').textContent), 'los totales de TimerPiano en la fila');
+    n.w.location.hash = `#timer=abc123def999.2026-11-16.300-0-0-0`; await esperar(() => aviso(n), 'aviso del enlace');
+    n.$('pr-stats-ir').click(); await esperar(() => n.$('pr-timer-stats'), 'tarjeta de tiempo');
+    assert.match(n.$('pr-timer-stats').textContent, /Hoy: 13 min · 7 días: 24 min · Racha: 1 día/, 'con totales compartidos el enlace no se suma otra vez: ' + n.$('pr-timer-stats').textContent);
+    assert.ok(n.w.localStorage.getItem('repertorio-timer-totales-v1'), 'guarda la última copia para cuando no haya señal');
+    sinErrores(n); const copia = n.w.localStorage.getItem('repertorio-timer-totales-v1'); n.cerrar();
+
+    const sinRed = await navegador('', { reloj, caido: true, antes: w => { w.localStorage.setItem('repertorio-timer-totales-v1', copia); w.localStorage.setItem('repertorio-sesion-v3', token); } });
+    await abrirPractica(sinRed); assert.match(sinRed.$('pr-timer').textContent, /Hoy: 13 min/, 'sin red usa la última copia'); sinErrores(sinRed); sinRed.cerrar();
+
+    for (const [caso, archivo] of [['archivo roto', 'esto no es json'], ['archivo de otra versión', { version: 9 }], ['sin archivo', null]]) {
+      memoria.clear(); if (archivo !== null) ponerTotales(archivo);
+      const m = await navegador('', { reloj }); await entrar(m); await abrirPractica(m); await dormir(400);
+      assert.doesNotMatch(m.$('pr-timer').textContent, /Hoy: 13 min/, caso); assert.match(m.$('pr-timer').textContent, /Te propone solfeo y oído|Hoy: 0 min/, caso); sinErrores(m); m.cerrar();
+    }
+    memoria.clear(); ponerTotales(contrato.totales.archivo);
+    const v = await navegador('', { reloj, antes: w => w.localStorage.setItem('repertorio-sesion-v3', 'ep1.1.' + 'a'.repeat(64)) });
+    await abrirPractica(v); await dormir(500); assert.equal(v.w.RepertorioLocal.leerPase(), '', 'un pase vencido se olvida'); sinErrores(v); v.cerrar();
+  } finally { process.env.TZ = antes; if (antes === undefined) delete process.env.TZ; }
+});

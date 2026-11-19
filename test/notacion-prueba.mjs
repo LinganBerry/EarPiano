@@ -159,8 +159,12 @@ test('oído: acordes con las notas correctas', () => {
 });
 
 test('oído: botones de respuesta y nombres de notas', () => {
-  const b = N.botones('int-asc', 1); assert.equal(b.tipo, 'opciones'); assert.deepEqual(JSON.parse(JSON.stringify(b.opciones.map(o => o.texto))), ['2m', '2M', '3m', '3M', '4J', '5J', '8J']);
-  assert.equal(N.botones('int-asc', 3).opciones.length, 12);
+  const b = N.botones('int-asc', 1); assert.equal(b.tipo, 'opciones'); assert.deepEqual(JSON.parse(JSON.stringify(b.opciones.map(o => o.texto))), ['3ª menor', '3ª mayor', '4ª justa', '5ª justa', 'Octava']);
+  assert.deepEqual(JSON.parse(JSON.stringify(b.opciones.map(o => o.sub))), ['3 teclas', '4 teclas', '5 teclas', '7 teclas', '12 teclas'], 'debajo de cada intervalo: cuántas teclas hay');
+  assert.deepEqual(JSON.parse(JSON.stringify(b.opciones.map(o => o.id))), ['3m', '3M', '4J', '5J', '8J'], 'los ids no cambian (las estadísticas guardadas siguen valiendo)');
+  assert.equal(N.botones('int-asc', 2).opciones.length, 7); assert.equal(N.botones('int-asc', 3).opciones.length, 12);
+  assert.equal(N.botones('int-asc', 1).opciones.some(o => /^[0-9][mMJ]$|^TT$/.test(o.texto)), false, 'ya no hay códigos como 3M o 4J');
+  assert.equal(N.botones('acordes', 1).opciones.every(o => o.sub === undefined), true);
   const a = N.botones('acordes', 3); assert.deepEqual(JSON.parse(JSON.stringify(a.opciones.map(o => o.texto))), ['Mayor 7ª', 'Dominante 7ª', 'Menor 7ª', 'Semidisminuido']);
   assert.equal(N.nombreMidi(60), 'C4'); assert.equal(N.nombreMidi(61), 'C#4'); assert.equal(N.nombreMidi(69), 'A4'); assert.equal(N.nombreMidi(48), 'C3');
 });

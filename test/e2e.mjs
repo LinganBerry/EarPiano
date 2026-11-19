@@ -365,7 +365,7 @@ test('PRACTICAR (oído): intervalos que suben: suena al empezar, se repite con R
   await empezarTema(n, 'int-asc', 10);
   assert.equal(audio.llamadas.length, 1, 'suena sola al aparecer la pregunta');
   assert.equal(audio.llamadas[0].length, 2, 'dos notas, una después de la otra');
-  assert.equal(n.d.querySelectorAll('#practica [data-op]').length, 7); assert.ok(n.$('pr-oir')); assert.equal(n.d.querySelector('#practica svg'), null, 'sin dibujos que den la respuesta');
+  assert.equal(n.d.querySelectorAll('#practica [data-op]').length, 5, 'nivel fácil: 5 intervalos'); assert.match(n.d.querySelector('#practica [data-op="3M"]').textContent, /3ª mayor.*4 teclas/s, 'nombre completo y número de teclas'); assert.ok(n.$('pr-oir')); assert.equal(n.d.querySelector('#practica svg'), null, 'sin dibujos que den la respuesta');
   n.tecla(n.d, 'r'); assert.equal(audio.llamadas.length, 2, 'R repite');
   n.$('pr-oir').click(); assert.equal(audio.llamadas.length, 3, 'el botón repite');
   await contestar(n, false);

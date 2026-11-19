@@ -510,3 +510,4 @@ body.presentando { overflow: hidden; }
   input[type=range], input[type=checkbox], input[type=radio] { background: none; border: 0; box-shadow: none; padding: 0; accent-color: var(--accent); }
   :root { --tit: var(--sans); }
   .ccuerpo h2, #cancion h2, .titulo { font-weight: 700; }
+  .pr-opciones .pr-sub { display: block; margin-top: .1rem; font-size: .72rem; font-weight: 400; color: var(--muted); }

@@ -55,10 +55,11 @@
     { id: 'maj7', nombre: 'Mayor 7ª', pasos: [0, 4, 7, 11] }, { id: 'dom7', nombre: 'Dominante 7ª', pasos: [0, 4, 7, 10] },
     { id: 'm7', nombre: 'Menor 7ª', pasos: [0, 3, 7, 10] }, { id: 'm7b5', nombre: 'Semidisminuido', pasos: [0, 3, 6, 10] }
   ];
+  // Niveles de intervalos, de menos a más: primero solo los 5 que mejor se distinguen (y que más se oyen en canciones), después las segundas y al final todos.
   const NIVELES_INTERVALOS = [
-    { id: 1, nombre: '2m 2M 3m 3M 4J 5J 8J', ids: ['2m', '2M', '3m', '3M', '4J', '5J', '8J'] },
-    { id: 2, nombre: '+ 6m 6M 7m 7M', ids: ['2m', '2M', '3m', '3M', '4J', '5J', '6m', '6M', '7m', '7M', '8J'] },
-    { id: 3, nombre: 'Todos (con tritono)', ids: INTERVALOS.map(i => i.id) }
+    { id: 1, nombre: 'Fácil: 5 intervalos', ids: ['3m', '3M', '4J', '5J', '8J'] },
+    { id: 2, nombre: 'Medio: 7 (con las segundas)', ids: ['2m', '2M', '3m', '3M', '4J', '5J', '8J'] },
+    { id: 3, nombre: 'Todos (12)', ids: INTERVALOS.map(i => i.id) }
   ];
   const NIVELES_ACORDES = [
     { id: 1, nombre: 'Mayor y menor', ids: ['mayor', 'menor'] },
@@ -274,7 +275,8 @@
   // Botones de respuesta que corresponden a (tema, nivel).
   function botones(tema, nivel) {
     const T = TEMAS[tema], N = T.niveles.find(n => n.id === nivel);
-    if (T.tipo === 'oido') return { tipo: 'opciones', opciones: N.ids.map(id => { const d = T.datos.find(x => x.id === id); return { id, texto: T.modo === 'acorde' || T.modo === 'prog' ? d.nombre : id, titulo: d.nombre }; }) };
+    // Intervalos: el botón dice el nombre completo ("3ª mayor") y debajo cuántas teclas del piano hay entre las dos notas (antes decía solo "3M").
+    if (T.tipo === 'oido') return { tipo: 'opciones', opciones: N.ids.map(id => { const d = T.datos.find(x => x.id === id); const interv = T.modo === 'asc' || T.modo === 'desc' || T.modo === 'arm'; return { id, texto: d.nombre, ...(interv ? { sub: d.n + (d.n === 1 ? ' tecla' : ' teclas') } : {}), titulo: d.nombre }; }) };
     if (T.tipo === 'armadura' || T.tipo === 'cuantas') return { tipo: 'opciones', opciones: rango(-N.max, N.max).map(f => (T.tipo === 'armadura' ? { id: String(f), texto: nombreTon(f, N.modo, true), titulo: nombreLargo(f, N.modo) } : { id: String(f), texto: textoAlt(f), titulo: letrasAlt(f) })) };
     if (T.tipo === 'escala') return { tipo: 'letras', letras: LETRAS.slice(), alteraciones: true };
     if (T.tipo === 'pentagrama') return { tipo: 'letras', letras: LETRAS.slice(), alteraciones: !!N.alt };

@@ -43,27 +43,63 @@
     return { est: { v: 1, ses: todas.slice(-MAX_REG) }, nuevo: true };
   }
   // Hoy, últimos 7 días (con hoy), racha (días seguidos con al menos 1 minuto; si hoy aún no llegas, cuenta desde ayer) y por área.
-  function resumen(est, hoy = fecha()) {
-    const ses = limpiar(est).ses, porDia = {}, areas = [0, 0, 0, 0], desde = sumarDias(hoy, -6);
+  // dias: { "AAAA-MM-DD": [s, h, o, t] } (segundos por área de cada día)
+  function resumirDias(dias, hoy) {
+    const porDia = {}, areas = [0, 0, 0, 0], desde = sumarDias(hoy, -6);
     let hoyS = 0, semS = 0;
-    for (const s of ses) {
-      const t = total(s.d); porDia[s.f] = (porDia[s.f] || 0) + t;
-      if (s.f === hoy) hoyS += t;
-      if (s.f >= desde && s.f <= hoy) { semS += t; s.d.forEach((x, i) => { areas[i] += x; }); }
+    for (const [f, d] of Object.entries(dias)) {
+      const t = total(d); porDia[f] = t;
+      if (f === hoy) hoyS = t;
+      if (f >= desde && f <= hoy) { semS += t; d.forEach((x, i) => { areas[i] += x; }); }
     }
     let racha = 0, f = (porDia[hoy] || 0) >= MIN_RACHA ? hoy : sumarDias(hoy, -1);
     while ((porDia[f] || 0) >= MIN_RACHA) { racha++; f = sumarDias(f, -1); }
-    return { hoy: hoyS, semana: semS, racha, areas: Object.fromEntries(AREAS.map((a, i) => [a, areas[i]])), registros: ses.length };
+    return { hoy: hoyS, semana: semS, racha, areas: Object.fromEntries(AREAS.map((a, i) => [a, areas[i]])) };
   }
+  function resumen(est, hoy = fecha()) {
+    const ses = limpiar(est).ses, dias = {};
+    for (const s of ses) { const d = dias[s.f] || (dias[s.f] = [0, 0, 0, 0]); s.d.forEach((x, i) => { d[i] += x; }); }
+    return { ...resumirDias(dias, hoy), registros: ses.length };
+  }
+  // Totales que TimerPiano deja en el almacén compartido (timerpiano/totales.json): se revisan igual que lo que llega por enlace.
+  function limpiarTotales(x) {
+    if (!x || typeof x !== 'object' || Array.isArray(x) || x.version !== 1) return null;
+    const dias = {};
+    for (const [f, d] of Object.entries(x.dias && typeof x.dias === 'object' && !Array.isArray(x.dias) ? x.dias : {}).slice(0, 400)) {
+      if (fechaValida(f) && Array.isArray(d) && d.length === 4 && d.every(n => Number.isInteger(n) && n >= 0 && n <= 86400)) dias[f] = d.slice();
+    }
+    return { version: 1, sesiones: Number.isInteger(x.sesiones) && x.sesiones >= 0 ? x.sesiones : 0, dias };
+  }
+  const resumenDeTotales = (t, hoy = fecha()) => ({ ...resumirDias(limpiarTotales(t).dias, hoy), registros: limpiarTotales(t).sesiones });
   const enlace = (plan = PLAN) => URL_TIMER + '#plan=' + Object.entries(plan).map(([a, m]) => a + '-' + m).join(',');
 
-  const api = { URL_TIMER, AREAS, NOMBRES, PLAN, fecha, leerHash, limpiar, agregar, resumen, enlace, minutos };
+  const api = { URL_TIMER, AREAS, NOMBRES, PLAN, fecha, leerHash, limpiar, agregar, resumen, limpiarTotales, resumenDeTotales, enlace, minutos };
   raiz.RepertorioTimer = api;
   if (typeof document === 'undefined') return;
 
   // --- en la página: guardar lo que llega, avisar y abrir TimerPiano ---
   const CLAVE = 'repertorio-timer-v1', { leer, guardar } = window.RepertorioLocal;
   api.estado = () => limpiar(leer(CLAVE));
+  // Lo que se muestra: si ya se leyeron los totales de TimerPiano (mismo almacén, con tu pase) se usan esos; si no, lo que llegó por enlace en este aparato.
+  const CLAVE_T = 'repertorio-timer-totales-v1';
+  api.resumenActual = (hoy = fecha()) => {
+    const t = limpiarTotales(leer(CLAVE_T));
+    return t ? { ...resumenDeTotales(t, hoy), sincronizado: true } : { ...resumen(api.estado(), hoy), sincronizado: false };
+  };
+  // Pide los totales al servidor (solo si hay pase). Devuelve true si cambiaron (para volver a pintar). Sin señal o sin pase: no pasa nada.
+  api.refrescar = async () => {
+    const { leerPase, olvidarPase, enviar } = window.RepertorioLocal, pase = leerPase();
+    if (!pase) return false;
+    try {
+      const { r, j } = await enviar('/api/timer', { token: pase });
+      if (r.status === 401) { olvidarPase(); return false; }
+      const t = r.ok ? limpiarTotales(j) : null;
+      if (!t) return false;
+      const antes = JSON.stringify(leer(CLAVE_T));
+      guardar(CLAVE_T, t);
+      return antes !== JSON.stringify(t);
+    } catch { return false; }
+  };
   api.abrir = plan => location.assign(enlace(plan));
   function aviso(texto) {
     const previo = document.getElementById('aviso-timer'); if (previo) previo.remove();

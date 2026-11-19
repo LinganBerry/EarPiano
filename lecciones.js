@@ -26,11 +26,10 @@
     {
       id: 'intervalos', titulo: 'Intervalos', temas: ['int-asc', 'int-desc', 'int-arm'],
       puntos: [
-        'Un intervalo es la distancia entre dos notas. Se mide en semitonos (una tecla a la siguiente, negras incluidas).',
-        '2ª menor 1 · 2ª mayor 2 · 3ª menor 3 · 3ª mayor 4 · 4ª justa 5 · tritono 6 · 5ª justa 7 · 6ª menor 8 · 6ª mayor 9 · 7ª menor 10 · 7ª mayor 11 · octava 12.',
-        'Las terceras te dicen el carácter: la mayor suena brillante y la menor, más oscura.',
-        'Referencias de canciones al subir: 4ª justa = “Aquí viene la novia”; 5ª justa = las dos primeras notas distintas de “Estrellita, ¿dónde estás?”; octava = el salto de “Somewhere over the rainbow”.',
-        'Cuando las dos notas suenan a la vez, el tritono y las segundas son las más tensas; la 5ª justa y la octava, las más estables.'
+        'Un intervalo es qué tan lejos están dos notas. Lo contamos en teclas del piano, con las negras: de Do a Re hay 2 teclas.',
+        'Empieza con solo cinco. 3ª menor (3 teclas): suena triste. 3ª mayor (4): suena alegre.',
+        '4ª justa (5): “Aquí viene la novia”. 5ª justa (7): las dos primeras notas de “Estrellita”. Octava (12): el salto de “Somewhere over the rainbow”.',
+        'Cuando salga uno, escúchalo dos veces y canta la segunda nota. Después elige.'
       ],
       visuales: [{ tipo: 'teclado', marcar: [60, 67] }]
     },

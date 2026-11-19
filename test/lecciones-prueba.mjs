@@ -30,8 +30,11 @@ test('lecciones: cortas, completas, sin marcadores de posición y con dibujos qu
 
 test('lo que dicen las lecciones coincide con la lógica (nada escrito de memoria sin comprobar)', () => {
   // intervalos: nombre y semitonos
-  const esperado = N.INTERVALOS.map(i => `${i.nombre.toLowerCase()} ${i.n}`).join(' · ');
-  assert.ok(texto('intervalos').toLowerCase().includes(esperado), 'lista de intervalos distinta de INTERVALOS');
+  // la lección nombra cinco intervalos con su número de teclas: tienen que ser los de INTERVALOS (y los mismos del nivel fácil)
+  for (const id of ['3m', '3M', '4J', '5J', '8J']) { const i = N.INTERVALOS.find(x => x.id === id); assert.ok(texto('intervalos').toLowerCase().includes(`${i.nombre.toLowerCase()} (${i.n}`), 'intervalo ' + id + ' en la lección'); }
+  assert.deepEqual(JSON.parse(JSON.stringify(N.botones('int-asc', 1).opciones.map(o => o.id))), ['3m', '3M', '4J', '5J', '8J'], 'el nivel fácil son los cinco de la lección');
+  assert.equal(N.INTERVALOS.find(x => x.id === '2M').n, 2, 'de Do a Re hay 2 teclas');
+  assert.ok(texto('intervalos').includes('de Do a Re hay 2 teclas'));
   // acordes: pasos de cada uno
   const pasos = id => N.ACORDES.find(a => a.id === id).pasos.join('-');
   for (const [id, nombre] of [['mayor', 'Mayor'], ['menor', 'menor'], ['dim', 'disminuido'], ['aum', 'aumentado'], ['maj7', 'mayor 7ª'], ['dom7', 'dominante 7ª'], ['m7', 'menor 7ª']])

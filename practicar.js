@@ -121,7 +121,7 @@
 
   // Fila de TimerPiano: lo practicado hoy allí (si ya llegó alguna sesión) o lo que se sugiere al abrirlo.
   function textoTimer() {
-    const T = window.RepertorioTimer, r = T.resumen(T.estado());
+    const T = window.RepertorioTimer, r = T.resumenActual();
     return r.registros ? `Bloques con micro-pausas. Hoy: ${T.minutos(r.hoy)} min.` : 'Bloques con micro-pausas. Te propone solfeo y oído, 5 min cada uno.';
   }
   let temasAbiertos = false;
@@ -253,11 +253,17 @@
   }
   // Tarjeta con el tiempo practicado que llegó desde TimerPiano (solo si ya llegó alguna sesión).
   function tiempoTimer() {
-    const T = window.RepertorioTimer, r = T && T.resumen(T.estado());
+    const T = window.RepertorioTimer, r = T && T.resumenActual();
     if (!r || !r.registros) return null;
     return el('div', { className: 'parte', id: 'pr-timer-stats' }, el('h3', {}, 'Tiempo de práctica (TimerPiano)'),
       el('p', { className: 'pr-datos' }, el('b', {}, 'Hoy: '), T.minutos(r.hoy) + ' min · ', el('b', {}, '7 días: '), T.minutos(r.semana) + ' min · ', el('b', {}, 'Racha: '), r.racha + (r.racha === 1 ? ' día' : ' días')),
       el('div', { className: 'chips' }, ...T.AREAS.filter(a => r.areas[a] > 0).map(a => el('span', { className: 'chip' }, el('b', {}, T.NOMBRES[a]), el('i', { className: 'rom' }, T.minutos(r.areas[a]) + ' min')))));
+  }
+  // Pide a TimerPiano lo practicado (totales compartidos) y, si cambió y sigues en esa pantalla, la vuelve a pintar.
+  function refrescarTimer(pantallaEsperada, repintar) {
+    const T = window.RepertorioTimer;
+    if (!T || !T.refrescar) return;
+    T.refrescar().then(cambio => { if (cambio && !caja.hidden && pantalla === pantallaEsperada) repintar(); });
   }
   function pintarEstadisticas() {
     dejarInicio();
@@ -267,6 +273,7 @@
     const dia = f => new Date(f + 'T12:00:00').toLocaleDateString('es', { weekday: 'short', day: 'numeric' });
     const filas = Object.entries(est.temas).map(([k, t]) => { const i = k.lastIndexOf(':'), tema = k.slice(0, i), nivel = Number(k.slice(i + 1)); return { tema, nivel, t }; })
       .filter(x => N.TEMAS[x.tema]).sort((a, b) => Object.keys(N.TEMAS).indexOf(a.tema) - Object.keys(N.TEMAS).indexOf(b.tema) || a.nivel - b.nivel);
+    refrescarTimer('estadisticas', pintarEstadisticas);
     caja.replaceChildren(barra(el('button', { type: 'button', title: 'Volver a Practicar', onclick: () => pintarInicio() }, '← Practicar'), 'Estadísticas'),
       el('div', { className: 'ccuerpo' },
         el('h2', { id: 'pr-stats', tabIndex: -1 }, total ? `${total} preguntas · ${pct(aciertos / total)}` : 'Aún no hay práctica'),
@@ -298,7 +305,7 @@
   }
 
   // --- sonido (oído) ---
-  const PREGUNTA_OIDO = { asc: '¿Qué intervalo suena? (sube)', desc: '¿Qué intervalo suena? (baja)', arm: '¿Qué intervalo suena? (a la vez)', acorde: '¿Qué acorde suena?', prog: '¿Qué progresión suena? (en números romanos)' };
+  const PREGUNTA_OIDO = { asc: 'Suenan dos notas, una y luego otra más aguda. ¿Qué intervalo es?', desc: 'Suenan dos notas, una y luego otra más grave. ¿Qué intervalo es?', arm: 'Suenan dos notas al mismo tiempo. ¿Qué intervalo es?', acorde: '¿Qué acorde suena?', prog: '¿Qué progresión suena? (en números romanos)' };
   let audioTexto = '';
   const marcarAudio = t => { audioTexto = t; const n = $('pr-audio'); if (n) n.textContent = t; };
   async function reproducir() {
@@ -359,7 +366,7 @@
         el('div', { className: 'pr-letras' }, ...b.letras.map(l => el('button', { type: 'button', 'data-letra': l, disabled: !!feedback, onclick: () => responder({ l, a: b.alteraciones ? mod : 0 }) }, l))));
     } else if (b.tipo === 'opciones') {
       respuestas = el('div', { className: 'pr-resp' }, el('div', { className: 'pr-letras pr-opciones' }, ...b.opciones.map((o, i) =>
-        el('button', { type: 'button', 'data-op': o.id, title: o.titulo, disabled: !!feedback, onclick: () => responder({ id: o.id }) }, i < 9 ? el('small', { className: 'pr-n' }, (i + 1) + ' ') : null, o.texto))));
+        el('button', { type: 'button', 'data-op': o.id, title: o.titulo, disabled: !!feedback, onclick: () => responder({ id: o.id }) }, i < 9 ? el('small', { className: 'pr-n' }, (i + 1) + ' ') : null, o.texto, o.sub ? el('small', { className: 'pr-sub' }, o.sub) : null))));
     }
     const cierre = feedback && el('div', { className: 'pr-feedback ' + (feedback.ok ? 'ok' : 'mal'), rol: 'status' },
       el('p', {}, feedback.ok ? '✓ Correcto' : '✗ ' + feedback.texto),
@@ -467,6 +474,7 @@
     caja.hidden = false; document.body.classList.add('fija');
     pintarInicio(); caja.focus({ preventScroll: true }); caja.scrollTop = 0;
     if (token()) sincronizar();
+    refrescarTimer('inicio', pintarInicio);
   }
   function cerrar() {
     window.RepertorioAudio?.detener();
