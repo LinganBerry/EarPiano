@@ -520,3 +520,120 @@ body.presentando { overflow: hidden; }
     :root[data-tema=papel] { --vidrio-fuerte: rgba(255, 255, 255, .72); }
     #barra, .cbarra, .capa-t, .capa-p, #nav, .aviso-timer, .lc-metro { -webkit-backdrop-filter: blur(20px) saturate(170%); backdrop-filter: blur(20px) saturate(170%); }
   }
+
+/* =====================================================================================
+   EarPiano · pulido visual v3 (mobile-first, noche primero)
+   Va al FINAL de estilos.css. No toca HTML ni JS: solo cambia cómo se ve.
+   - Jerarquía: título > acorde/tono > texto de apoyo; una sola acción principal por zona.
+   - Toque: todo lo pulsable mide 44 px o más; los filtros se deslizan en una sola fila en el teléfono.
+   - Lectura: acordes más grandes, números romanos con color propio, texto de apoyo más claro.
+   ===================================================================================== */
+:root { --toque: 44px; --r-pill: 999px; }
+:root[data-tema=escenario] {
+  --muted: #b4acd6;              /* un poco más claro: mejor lectura del texto de apoyo en teléfono */
+  --romano: #ff9cc2;             /* número romano: rosa suave, distinto del acorde */
+  --chip-fondo: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.05));
+}
+:root[data-tema=papel] { --romano: #b0185c; --chip-fondo: linear-gradient(180deg, #fff, rgba(255,255,255,.7)); }
+
+/* --- Cabecera: marca clara, botones de 46 px --- */
+.marca h1 { font-size: clamp(1.45rem, 6.6vw, 2rem); letter-spacing: -.03em; }
+@supports (-webkit-background-clip: text) or (background-clip: text) {
+  .marca h1 { background: linear-gradient(90deg, var(--ink) 55%, var(--accent)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+}
+#franja { height: 5px; margin: .8rem 0 1rem; opacity: .9; }
+#intro { font-size: .98rem; line-height: 1.45; }
+
+/* --- Buscador: grande, redondo, con lupa; filtros en una sola fila deslizable --- */
+#q {
+  min-height: 52px; padding-left: 2.8rem; border-radius: var(--r-pill); font-size: 1rem;
+  background: var(--vidrio) no-repeat 1rem 50% / 20px 20px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23b4acd6' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E");
+}
+:root[data-tema=papel] #q { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236a6590' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E"); }
+.badge { min-height: 36px; display: inline-flex; align-items: center; font-weight: 600; }
+#barra .pastillas {
+  flex-wrap: nowrap; overflow-x: auto; margin: 0 -1rem; padding: .65rem 1rem .25rem;
+  scroll-snap-type: x proximity; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 1.4rem), transparent);
+  mask-image: linear-gradient(90deg, #000 calc(100% - 1.4rem), transparent);
+}
+#barra .pastillas::-webkit-scrollbar { display: none; }
+#barra .pastillas::after { content: ""; flex: none; width: 1.2rem; }   /* deja respirar a la última pastilla */
+#barra .pastillas button { scroll-snap-align: start; min-width: var(--toque); min-height: var(--toque); padding: .3rem .9rem; font-weight: 700; }
+@media (min-width: 900px) {
+  #barra .pastillas { flex-wrap: wrap; overflow: visible; -webkit-mask-image: none; mask-image: none; margin: 0; padding-left: 0; padding-right: 0; }
+  #barra .pastillas::after { display: none; }
+}
+
+/* --- Lista: título claro arriba, artista debajo, tono como sello a la derecha --- */
+.fila { padding: .1rem .5rem .1rem 1rem; gap: .8rem; }
+.abrir { min-height: 64px; padding: .7rem 0; }
+.t { font-size: 1.12rem; line-height: 1.25; }
+.a { margin-top: .15rem; font-size: .9rem; color: var(--muted); }
+.fila > .tono { flex: none; min-width: 3.1rem; min-height: 2.5rem; font-size: 1.05rem; border-radius: 12px; }
+:root[data-tema=escenario] .tono:not(button) {
+  color: hsl(var(--h, 0) 95% 90%); background: hsl(var(--h, 0) calc(var(--s, 30%) + 38%) 24% / .85);
+  box-shadow: inset 0 0 0 1px hsl(var(--h, 0) 70% 60% / .5);
+}
+.fila.ultima { box-shadow: inset 4px 0 0 var(--accent), var(--sombra), var(--brillo); }
+.vacio { padding: 2.5rem 1rem; font-size: 1rem; }
+
+/* --- Barra de abajo: icono + texto legible, activa con luz de acento --- */
+#nav button { font-size: .78rem; letter-spacing: .01em; }
+#nav button[aria-current=page] .ic { stroke: var(--accent); }
+
+/* --- Pantalla de canción: el título manda, los acordes se leen de lejos --- */
+.ccuerpo h2 { font-size: clamp(1.75rem, 7.5vw, 2.4rem); line-height: 1.1; margin-bottom: .3rem; }
+.ccuerpo > .a { font-size: 1rem; }
+.cbarra { gap: .5rem; }
+.cbarra button { min-height: var(--toque); min-width: var(--toque); font-weight: 650; }
+.ctitulo { font-weight: 650; }
+.parte { padding: .85rem 1rem 1rem; margin: 1rem 0; }
+.parte h3 { display: flex; align-items: center; gap: .55rem; margin: 0 0 .7rem; color: var(--ink); font-size: .8rem; letter-spacing: .09em; }
+.parte h3::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 70%, transparent); }
+.parte.coro h3::before { background: var(--accent-2); box-shadow: 0 0 8px color-mix(in srgb, var(--accent-2) 70%, transparent); }
+.parte h3 small { color: var(--muted); }
+.chips, .compas { gap: .55rem; }
+.chip { min-width: 3.6rem; min-height: 3.4rem; justify-content: center; padding: .3rem .85rem; font-size: calc(1.4rem * var(--z, 1)); background: var(--chip-fondo); box-shadow: var(--brillo); }
+.chip .rom { margin-top: .12rem; font-size: calc(.82rem * var(--z, 1)); font-weight: 650; color: var(--romano); }
+.barra { color: var(--muted); opacity: .55; }
+.letra { font-size: calc(1.05rem * var(--z, 1)); line-height: 1.6; }
+.pista { color: var(--muted); }
+
+/* --- Selectores de vista (Acordes/Letra, Letras/Romanos/Números): control segmentado --- */
+.vistas, .n-sel { display: flex; flex-wrap: nowrap; gap: .25rem; padding: .25rem; margin: .7rem 0; border: 1px solid var(--line); border-radius: var(--r-pill); background: var(--fila); }
+.vistas button, .n-sel button { flex: 1; min-height: var(--toque); padding: .3rem .5rem; border: 0; border-radius: var(--r-pill); background: none; box-shadow: none; color: var(--muted); font-weight: 650; }
+.vistas button[aria-pressed=true], .n-sel button[aria-pressed=true] { border: 0; background: var(--boton); color: var(--sobre-accent); box-shadow: var(--glow); }
+
+/* --- Pie de canción: Anterior / Siguiente grandes, posición en el centro --- */
+.cpie { gap: .6rem; background: var(--vidrio-fuerte); border-color: var(--borde); }
+.cpie button { flex: 1; max-width: 12rem; min-height: 48px; font-weight: 650; }
+.cpie .pos { flex: none; min-width: 3.5rem; text-align: center; font-weight: 600; }
+
+/* --- Practicar y Teoría: bloques desplegables y filas con toque cómodo --- */
+#practica summary, .cq-mas > summary { list-style: none; justify-content: space-between; }
+#practica summary::-webkit-details-marker, .cq-mas > summary::-webkit-details-marker { display: none; }
+.pr-temas > summary::after, .cq-mas > summary::after { content: "›"; font-size: 1.5rem; line-height: 1; color: var(--muted); transition: transform .2s var(--curva); }
+.pr-temas[open] > summary::after, .cq-mas[open] > summary::after { transform: rotate(90deg); }
+.pr-grupo { font-size: 1.15rem; }
+.pr-fila { padding: .8rem 1rem; }
+.pr-fila button { min-height: 48px; }
+.grupo h3 { color: var(--muted); }
+.rt-botones button, .pr-letras button { min-height: 56px; }
+
+/* --- Escritorio: contenido centrado, tarjetas con elevación al pasar el ratón --- */
+@media (min-width: 900px) {
+  .ccuerpo { padding-top: 1.5rem; }
+  .chip { min-height: 3.6rem; }
+}
+@media (hover: hover) and (pointer: fine) {
+  .fila:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,0,0,.28), var(--brillo); }
+  .chip { transition: transform .15s var(--curva); }
+  .chip:hover { transform: translateY(-1px); }
+}
+
+/* --- Canción corta: el pie Anterior/Siguiente queda pegado abajo (antes flotaba a media pantalla) --- */
+#cancion:not([hidden]) { display: flex; flex-direction: column; }
+#cancion > .ccuerpo { flex: 1 0 auto; width: 100%; }
+#cancion > .cbarra, #cancion > .cpie { flex: none; }
