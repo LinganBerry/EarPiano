@@ -665,3 +665,73 @@ body.presentando { overflow: hidden; }
 .rel .abrir .a + .a::before { content: " · "; }
 .rel .fila > .tono { min-width: 2.6rem; min-height: 2.1rem; font-size: .95rem; border-radius: 10px; }
 .rel-mas, .volver-rel { min-height: 44px; margin-top: .25rem; font-size: .92rem; }
+
+/* =====================================================================================
+   v4 · Retos, teclado y modo edición
+   ===================================================================================== */
+
+/* --- Teclado: teclas con relieve, sombra y etiquetas legibles (Teoría y retos) --- */
+.teclado, .pteclado { filter: drop-shadow(0 8px 12px rgba(0,0,0,.4)); border-radius: 0 0 10px 10px; touch-action: manipulation; }
+.tk-b, .pk-b { fill: url(#g-blanca); stroke: #b9b2a0; stroke-width: .8; rx: 3px; ry: 3px; transition: fill .08s; }
+.tk-n, .pk-n { fill: url(#g-negra); stroke: #0b0b10; stroke-width: .8; rx: 2.5px; ry: 2.5px; filter: drop-shadow(0 3px 2px rgba(0,0,0,.55)); }
+.tk-b.on, .pk-b.pk-on, .tk-n.on, .pk-n.pk-on { fill: url(#g-activa); }
+.tk-b.raiz, .tk-n.raiz { fill: url(#g-raiz); }
+.tk-b.pulsa, .tk-n.pulsa { transform: translateY(2px); filter: brightness(.88); }
+.tk-b.pulsa.on { fill: url(#g-activa); }
+.pk-b.pk-ok, .pk-n.pk-ok { fill: #3f9b4a; } .pk-b.pk-mal, .pk-n.pk-mal { fill: #c4432f; }
+.tk-t { font-size: 11px; font-weight: 800; paint-order: stroke; stroke: rgba(0,0,0,.55); stroke-width: 2.2px; stroke-linejoin: round; }
+.teclado, .pteclado { margin-top: .6rem; margin-bottom: .6rem; }
+
+/* --- Retos: pantalla de inicio (empezar arriba, progreso, y al final los ajustes) --- */
+[data-retos] .rt-inicio { display: grid; grid-template-columns: 1.4fr 1fr; gap: .6rem; margin: .4rem 0 1rem; }
+[data-retos] .rt-inicio button { min-height: 60px; font-size: 1.1rem; font-weight: 750; border-radius: 16px; margin: 0; }
+[data-retos] .rt-inicio .primario { box-shadow: var(--glow); }
+#rt-progreso { text-align: left; }
+#rt-progreso > p:first-of-type { font-size: 1.15rem; font-weight: 700; color: var(--ink); }
+
+/* --- Retos: sesión (acorde enorme, avance por segmentos, botones grandes) --- */
+.pr-sesion[data-retos] { display: flex; flex-direction: column; align-items: stretch; padding-top: .8rem; }
+.rt-avance { display: flex; flex-direction: column; align-items: center; gap: .35rem; }
+.rt-seg { display: flex; gap: 4px; width: 100%; max-width: 26rem; }
+.rt-seg i { flex: 1; height: 8px; border-radius: 4px; background: var(--fila); box-shadow: inset 0 0 0 1px var(--line); }
+.rt-seg i.ok { background: #3fcf7a; box-shadow: none; } .rt-seg i.mal { background: #ff6b6b; box-shadow: none; }
+.rt-seg i.ahora { background: var(--accent); box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 70%, transparent); }
+.rt-racha { margin: 0; min-height: 1.4rem; font-size: .9rem; font-weight: 700; color: var(--accent-2, var(--accent)); }
+.rt-racha::before { content: "🔥 "; }
+.pr-sesion[data-retos] .rt-acorde { margin: .6rem auto .2rem; padding: .7rem 1.4rem; min-width: 60%; font-size: clamp(4.6rem, 26vw, 7.5rem); line-height: 1; letter-spacing: -.02em; border-radius: 28px; background: var(--vidrio); box-shadow: inset 0 0 0 1px var(--borde), 0 10px 40px rgba(0,0,0,.35), 0 0 60px color-mix(in srgb, var(--accent) 22%, transparent); }
+.pr-sesion[data-retos] .rt-pos { align-self: center; margin: .2rem 0 1rem; padding: .3rem .9rem; font-size: .95rem; font-weight: 650; border-radius: 999px; background: var(--fila); border: 1px solid var(--line); }
+.rt-botones { gap: .7rem; width: 100%; }
+.rt-botones button { min-height: 64px; font-size: 1.2rem; font-weight: 750; border-radius: 18px; }
+.rt-botones .primario { box-shadow: var(--glow); }
+.rt-notas { color: var(--accent); }
+
+/* --- Retos: resultado (anillo con el porcentaje y un mensaje) --- */
+.rt-cabeza { display: flex; flex-direction: column; align-items: center; gap: .4rem; margin: .4rem 0 .6rem; }
+.rt-anillo { --p: 0; display: grid; place-items: center; width: 8.5rem; aspect-ratio: 1; border-radius: 50%; background: conic-gradient(var(--accent) calc(var(--p) * 1%), var(--fila) 0); }
+.rt-anillo span { display: grid; place-items: center; width: 76%; aspect-ratio: 1; border-radius: 50%; background: var(--bg, #07051a); font-size: 2rem; font-weight: 800; }
+.rt-mensaje { margin: .2rem 0 0; font-size: 1.25rem; font-weight: 750; text-align: center; }
+#rt-resultado { font-size: 1rem; text-align: center; color: var(--muted); font-weight: 600; }
+
+/* --- Modo edición: pasos numerados, campos grandes, lo opcional plegado --- */
+.capa-c { padding-bottom: 1.5rem; }
+.capa .campo input, .capa .campo select, .capa .campo textarea { font-size: 1rem; min-height: 50px; border-radius: 14px; }
+.capa .campo textarea { min-height: 9rem; line-height: 1.5; font-family: ui-monospace, Menlo, Consolas, monospace; }
+.ed-sec { margin: 0 0 1rem; padding: .9rem 1rem 1rem; border: 1px solid var(--line); border-radius: 18px; background: var(--fila); }
+.ed-sec > h3, .ed-sec > summary { margin: 0 0 .6rem; font-size: .8rem; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.ed-op > summary { display: flex; align-items: center; justify-content: space-between; min-height: 44px; margin: 0; cursor: pointer; list-style: none; }
+.ed-op > summary::-webkit-details-marker { display: none; }
+.ed-op > summary::after, .ed-ayuda > summary::after { content: "›"; font-size: 1.4rem; line-height: 1; transition: transform .2s; }
+.ed-op[open] > summary::after, .ed-ayuda[open] > summary::after { transform: rotate(90deg); }
+.ed-op[open] > summary { margin-bottom: .5rem; }
+.ed-chips { display: flex; gap: .4rem; overflow-x: auto; padding: .1rem 0 .6rem; scrollbar-width: none; }
+.ed-chips::-webkit-scrollbar { display: none; }
+.ed-chip { flex: none; min-height: 44px; padding: .3rem .85rem; border-radius: 999px; font-weight: 700; }
+.ed-ayuda { margin-top: .4rem; }
+.ed-ayuda > summary { display: flex; justify-content: space-between; align-items: center; min-height: 44px; cursor: pointer; list-style: none; color: var(--accent); font-weight: 650; }
+.ed-ayuda > summary::-webkit-details-marker { display: none; }
+.capa-p { gap: .6rem; }
+.capa-p .primario { flex: 1; min-height: 52px; font-size: 1.05rem; }
+
+.defs-svg { position: absolute; width: 0; height: 0; overflow: hidden; }
+#rt-repetir, #rt-opciones { min-height: 56px; font-weight: 750; border-radius: 16px; }
+#rt-repetir { box-shadow: var(--glow); }

@@ -344,7 +344,7 @@
   }
   // Teclado de 2 octavas (C4–B5). opciones: { marcar: [midi], interactivo, clases: { midi: 'pk-ok' | 'pk-mal' } }
   function svgTeclado(op = {}) {
-    const W = 22, H = 100, NW = 13, NH = 62, blancas = [], negras = [];
+    const W = 22, H = 136, NW = 14, NH = 84, blancas = [], negras = [];
     const marcar = new Set(op.marcar || []), clases = op.clases || {};
     const attrs = (m, nom) => `data-midi="${m}"` + (op.interactivo ? ` tabindex="0" role="button" aria-label="${nom}"` : '');
     const cl = (m, base) => base + (marcar.has(m) ? ' pk-on' : '') + (clases[m] ? ' ' + clases[m] : '');

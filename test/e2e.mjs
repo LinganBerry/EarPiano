@@ -695,7 +695,7 @@ test('CANCIÓN: canciones con la misma progresión, clickeables, con "Volver a" 
   sinErrores(n); n.cerrar();
 });
 
-test('CANCIÓN: con muchas canciones iguales se muestran 4 y "Ver las N" abre el resto', async () => {
+test('CANCIÓN: con muchas canciones iguales se muestran 3 y "Ver las N" abre el resto', async () => {
   memoria.clear();
   sembrar(['A', 'B', 'C', 'D', 'E', 'F'].map((t, i) => ['Canción ' + t, ['G', 'C', 'D', 'A', 'E', 'F'][i], ['Coro', ['G D Em C', 'C G Am F', 'D A Bm G', 'A E F#m D', 'E B C#m A', 'F C Dm Bb'][i]]]));
   const n = await navegador();
@@ -704,11 +704,11 @@ test('CANCIÓN: con muchas canciones iguales se muestran 4 y "Ver las N" abre el
   d.querySelector('#lista .fila .abrir').click();
   const caja = $('cancion'); await esperar(() => !caja.hidden, 'abrir una');
   const visibles = () => [...caja.querySelectorAll('.rel .fila')].filter(f => !f.hidden).length;
-  assert.equal(caja.querySelectorAll('.rel .fila').length, 5); assert.equal(visibles(), 4);
+  assert.equal(caja.querySelectorAll('.rel .fila').length, 5); assert.equal(visibles(), 3);
   const mas = caja.querySelector('.rel-mas');
   assert.equal(mas.textContent, 'Ver las 5'); assert.equal(mas.getAttribute('aria-expanded'), 'false');
   mas.click(); assert.equal(visibles(), 5); assert.equal(mas.textContent, 'Ver menos'); assert.equal(mas.getAttribute('aria-expanded'), 'true');
-  mas.click(); assert.equal(visibles(), 4);
+  mas.click(); assert.equal(visibles(), 3);
   sinErrores(n); n.cerrar();
 });
 

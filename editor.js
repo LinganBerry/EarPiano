@@ -211,7 +211,7 @@
         : !n.tono ? ['f-tono', 'Elige el tono.']
         : n.enlace && !/^https?:\/\/\S+$/i.test(n.enlace) ? ['f-enlace', 'El link debe empezar con http:// o https://']
         : mostrarRevision().length ? ['f-partes', 'Corrige los errores marcados en las partes.'] : null;
-      if (mal) { $('f-msg').textContent = mal[1]; $(mal[0]).focus(); return; }
+      if (mal) { $('f-msg').textContent = mal[1]; { const d = $(mal[0]).closest('details'); if (d) d.open = true; } $(mal[0]).focus(); return; }
       const repetida = lista().some(x => x.id !== c.id && norm(x.titulo) === norm(n.titulo) && norm(x.artista) === norm(n.artista));
       if (repetida && !confirm('Ya existe una canción igual. ¿Guardarla de todos modos?')) return;
       botonGuardar.disabled = true;
@@ -241,17 +241,23 @@
       app.render();
       exito();
     };
+    const insertarParte = (txt, enCursor) => {
+      const t = $('f-partes'); t.focus();
+      if (enCursor) { const a = t.selectionStart, b = t.selectionEnd; t.value = t.value.slice(0, a) + txt + t.value.slice(b); t.selectionStart = t.selectionEnd = a + txt.length; }
+      else { t.value += (t.value && !t.value.endsWith('\n') ? '\n' : '') + txt; t.selectionStart = t.selectionEnd = t.value.length; }
+      mostrarRevision();
+    };
     abrirCapa(i >= 0 ? 'Editar canción' : 'Nueva canción', [
-      campo('Canción', f('titulo')),
-      campo('Artista', f('artista')),
-      campo('Tono', tono),
-      campo('Nota (opcional, ej: capo 2)', f('nota')),
-      campo('Link de referencia (opcional)', f('enlace', { type: 'url', placeholder: 'https://…' })),
-      campo('Partes y acordes (opcional)', partes),
-      el('p', { className: 'pista-ayuda' }, 'Una parte por línea: Nombre (tono): acordes // pista. El (tono) solo si la parte modula. Marca el compás con |. La pista es una línea corta: no pegues la letra de la canción (derechos de autor).'),
-      el('ul', { id: 'avisos' }),
-      campo('Letra con acordes (opcional)', letra),
-      el('p', { className: 'pista-ayuda' }, 'Escribe cada acorde entre corchetes justo antes de la sílaba donde cambia: [Am]Cuando salga el [F]sol. Una línea que solo tiene [Coro] o [Verso 1] es un título de sección. Deja una línea en blanco entre bloques. ', el('span', { id: 'f-letra-n' })),
+      el('div', { className: 'ed-sec' }, el('h3', {}, '1 · La canción'),
+        campo('Canción', f('titulo')), campo('Artista', f('artista')), campo('Tono', tono)),
+      el('div', { className: 'ed-sec' }, el('h3', {}, '2 · Partes y acordes'),
+        el('div', { className: 'ed-chips', rol: 'group', 'aria-label': 'Agregar una parte' }, ...['Intro', 'Verso', 'Pre-coro', 'Coro', 'Puente', 'Final'].map(n => el('button', { type: 'button', className: 'ed-chip', onclick: () => insertarParte(n + ': ') }, '+ ' + n)), el('button', { type: 'button', className: 'ed-chip', 'aria-label': 'Marcar compás', onclick: () => insertarParte(' | ', true) }, '|')),
+        campo('Una parte por línea', partes), el('ul', { id: 'avisos' }),
+        el('details', { className: 'ed-ayuda' }, el('summary', {}, '¿Cómo se escribe?'), el('p', { className: 'pista-ayuda' }, 'Una parte por línea: Nombre (tono): acordes // pista. El (tono) solo si la parte modula. Marca el compás con |. La pista es una línea corta: no pegues la letra de la canción (derechos de autor).'))),
+      el('details', { className: 'ed-sec ed-op', open: !!c.letra }, el('summary', {}, '3 · Letra con acordes (opcional)'),
+        campo('Letra', letra), el('p', { className: 'pista-ayuda' }, 'Escribe cada acorde entre corchetes justo antes de la sílaba donde cambia: [Am]Cuando salga el [F]sol. Una línea que solo tiene [Coro] o [Verso 1] es un título de sección. Deja una línea en blanco entre bloques. ', el('span', { id: 'f-letra-n' }))),
+      el('details', { className: 'ed-sec ed-op', open: !!(c.nota || c.enlace) }, el('summary', {}, '4 · Nota y link (opcional)'),
+        campo('Nota (ej: capo 2)', f('nota')), campo('Link de referencia', f('enlace', { type: 'url', placeholder: 'https://…' }))),
       el('p', { id: 'f-msg', className: 'aviso-e' })
     ], [i >= 0 && c.id && el('button', { type: 'button', className: 'peligro', onclick: borrar }, 'Papelera'), sp(), botonGuardar]);
     mostrarRevision();

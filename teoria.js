@@ -64,7 +64,7 @@
 
   // --- teclado de 2 octavas: se marcan las notas (con su nombre bien escrito, F# o Gb) ---
   function teclado(notas, raiz) {
-    const W = 24, H = 96, NEG = 58, BW = 15;
+    const W = 24, H = 132, NEG = 80, BW = 16;
     const por = new Map();
     notas.forEach(n => { const c = T.Note.chroma(n); if (!por.has(c)) por.set(c, n); });
     const cRaiz = T.Note.chroma(raiz);
