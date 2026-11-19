@@ -146,7 +146,8 @@
 
   // --- tamaño de letra: se recuerda en el dispositivo (localStorage) ---
   const { leer, guardar } = window.RepertorioLocal;
-  let zoom = Math.min(1.9, Math.max(.85, Number(leer('repertorio-zoom', 1)) || 1));
+  const ZMIN = .5;   // tamaño mínimo de letra (antes .85, quedaba grande en algunos teléfonos)
+  let zoom = Math.min(1.9, Math.max(ZMIN, Number(leer('repertorio-zoom', 1)) || 1));
   let actual = null, ultima = null, orden = [];
 
   // Pantalla encendida mientras la canción está abierta (si el navegador lo permite).
@@ -410,9 +411,9 @@
   }, { passive: true });
 
   // A− / A+ se apagan al llegar al límite, para que se note que no hay más.
-  const topesZoom = () => { const a = $('zmenos'), b = $('zmas'); if (a) a.disabled = zoom <= .85; if (b) b.disabled = zoom >= 1.9; };
+  const topesZoom = () => { const a = $('zmenos'), b = $('zmas'); if (a) a.disabled = zoom <= ZMIN; if (b) b.disabled = zoom >= 1.9; };
   function cambiarZoom(d) {
-    zoom = Math.min(1.9, Math.max(.85, Math.round((zoom + d) * 100) / 100));
+    zoom = Math.min(1.9, Math.max(ZMIN, Math.round((zoom + d) * 100) / 100));
     guardar('repertorio-zoom', zoom);
     $('cancion').style.setProperty('--z', zoom);
     topesZoom();

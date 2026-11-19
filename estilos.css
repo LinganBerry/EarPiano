@@ -637,3 +637,11 @@ body.presentando { overflow: hidden; }
 #cancion:not([hidden]) { display: flex; flex-direction: column; }
 #cancion > .ccuerpo { flex: 1 0 auto; width: 100%; }
 #cancion > .cbarra, #cancion > .cpie { flex: none; }
+
+/* --- Zoom (A− / A+): todo lo de la canción escala con --z, también al hacerlo pequeño (mínimo .5) --- */
+.ccuerpo h2 { font-size: calc(clamp(1.75rem, 7.5vw, 2.4rem) * var(--z, 1)); }
+.ccuerpo > .a { font-size: calc(1rem * var(--z, 1)); }
+.chip { min-width: calc(3.6rem * var(--z, 1)); min-height: calc(3.4rem * var(--z, 1)); padding: calc(.3rem * var(--z, 1)) calc(.85rem * var(--z, 1)); }
+.parte h3 { font-size: calc(.8rem * var(--z, 1)); }
+.chips, .compas { gap: calc(.55rem * var(--z, 1)); }
+.parte { padding: calc(.85rem * var(--z, 1)) calc(1rem * var(--z, 1)) calc(1rem * var(--z, 1)); }
