@@ -33,6 +33,6 @@ TimerPiano es la otra app: un temporizador de práctica. Al terminar una sesión
 Para que EarPiano muestre lo que practicas en TimerPiano sin copiar nada:
 
 1. En los dos proyectos de Vercel usa el **mismo `SESSION_SECRET`**. Así entras una vez con tu contraseña y el pase vale en las dos.
-2. Conecta los dos proyectos al **mismo almacén de Vercel Blob** (el mismo `BLOB_READ_WRITE_TOKEN`).
+2. TimerPiano guarda en el almacén de EarPiano: en su proyecto de Vercel va una variable `EARPIANO_BLOB_TOKEN` con el token de lectura y escritura de este almacén (sirve aunque estén en cuentas distintas).
 
 TimerPiano deja un resumen en `timerpiano/totales.json` cada vez que sincronizas. EarPiano solo lee ese resumen. Si no lo conectas, sigue funcionando con el botón **Sumar a EarPiano**.
