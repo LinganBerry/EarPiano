@@ -735,3 +735,8 @@ body.presentando { overflow: hidden; }
 .defs-svg { position: absolute; width: 0; height: 0; overflow: hidden; }
 #rt-repetir, #rt-opciones { min-height: 56px; font-weight: 750; border-radius: 16px; }
 #rt-repetir { box-shadow: var(--glow); }
+
+/* --- Teoría: burbujas de acordes un pelito más pequeñas (~10 %). Solo aquí; las canciones no cambian. --- */
+#teoria .chips, #teoria .compas { gap: .36rem; }
+#teoria .chip { min-width: 2.8rem; min-height: 2.6rem; padding: .18rem .52rem; font-size: 1.12rem; border-radius: 13px; }
+#teoria .chip .rom { font-size: .68rem; }
