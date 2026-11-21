@@ -782,3 +782,7 @@ body.presentando { overflow: hidden; }
 .rc-veredicto.bien { color: #3fcf7a; } .rc-veredicto.mal { color: #ff6b6b; }
 .rc-era { margin: .2rem 0 .5rem; font-size: 1.1rem; font-weight: 650; }
 #rc-sig, #rc-comprobar { width: 100%; }
+
+/* Reconocer: botones del resultado grandes, igual que en Retos */
+#rc-repetir, #rc-opciones { min-height: 56px; font-weight: 750; border-radius: var(--r-btn); }
+#rc-repetir { box-shadow: var(--glow); }
