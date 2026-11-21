@@ -60,6 +60,19 @@
 
   const PREF0 = { calidad: 'ambos', inversiones: true, vista: 'piano', clave: 'ambas', repasar: true };
   let caja = null, volverFn = null, vista = 'menu', ses = null, pref = { ...PREF0 }, est = R.vacias();
+  // Avance de la sesión: un segmento por acorde (verde bien, rojo fallo, brillante el actual) y racha de aciertos.
+  const racha = h => { let k = 0; for (let i = h.length - 1; i >= 0 && h[i].bien; i--) k++; return k; };
+  const segmentos = s => el('div', { className: 'rt-avance' },
+    el('div', { className: 'rt-seg', 'aria-hidden': 'true' }, ...Array.from({ length: s.total }, (_, k) => el('i', { className: k < s.hechas.length ? (s.hechas[k].bien ? 'ok' : 'mal') : k === s.i - 1 ? 'ahora' : '' }))),
+    racha(s.hechas) >= 2 ? el('p', { className: 'rt-racha' }, racha(s.hechas) + ' seguidos') : null);
+  function cabeceraResultado(bien, total, hechas) {
+    const pct = Math.round((bien / total) * 100);
+    const msg = pct === 100 ? '¡Perfecto! Ni un fallo.' : pct >= 80 ? '¡Muy bien! Casi lo dominas.' : pct >= 50 ? 'Vas por buen camino. Repasa los que fallaste.' : 'Cada intento cuenta. Repite y vas a mejorar.';
+    let mejor = 0, k = 0; hechas.forEach(x => { k = x.bien ? k + 1 : 0; mejor = Math.max(mejor, k); });
+    const anillo = el('div', { className: 'rt-anillo', 'aria-hidden': 'true' }, el('span', {}, pct + '%'));
+    anillo.style.setProperty('--p', pct);   // por CSSOM: la CSP del sitio bloquea los estilos en línea
+    return el('div', { className: 'rt-cabeza' }, anillo, el('p', { className: 'rt-mensaje' }, msg), mejor >= 2 ? el('p', { className: 'a' }, 'Mejor racha: ' + mejor + ' seguidos') : null);
+  }
   const barra = (izq, centro) => el('div', { className: 'cbarra' }, izq, el('span', { className: 'ctitulo' }, centro));
   const atrasBtn = (texto, titulo = 'Salir') => el('button', { type: 'button', title: titulo, onclick: () => history.back() }, texto);
   const poner = (...hijos) => { caja.replaceChildren(...hijos); caja.scrollTop = 0; };
@@ -90,6 +103,9 @@
         el('div', { className: 'parte', id: 'rc-progreso' }, el('h3', {}, 'Tu progreso'),
           r.v ? el('p', {}, `${r.v} acordes · ${Math.round((r.a / r.v) * 100)}% bien`) : el('p', {}, 'Aún no has hecho este ejercicio.'),
           r.repasar.length ? [el('p', { className: 'a' }, 'Para repasar'), el('div', { className: 'chips' }, ...r.repasar.map(f => el('span', { className: 'chip' }, el('b', {}, f.nombre), el('i', { className: 'rom' }, f.corta + ' · ' + Math.round((f.a / f.v) * 100) + '%'))))] : null)));
+    // Orden pensado para el teléfono: primero empezar, luego tu progreso, y al final los ajustes.
+    const cu = caja.querySelector('.ccuerpo'), ini = cu.querySelector('#rc-empezar-10').closest('p'), pro = cu.querySelector('#rc-progreso');
+    ini.classList.add('rt-inicio'); cu.insertBefore(ini, cu.children[1]); cu.insertBefore(pro, ini.nextSibling);
     caja.scrollTop = y;
   }
 
@@ -143,7 +159,7 @@
         el('div', { className: 'rt-botones' }, el('button', { type: 'button', className: 'primario', id: 'rc-sig', onclick: avanzar }, ultimo ? 'Ver resultado' : 'Siguiente'))];
     }
     poner(barra(atrasBtn('← Salir', 'Salir (Esc)'), `${ses.i} / ${ses.total}`),
-      el('div', { className: 'ccuerpo pr-sesion', 'data-reconocer': '1' }, ...visual, ...cuerpo));
+      el('div', { className: 'ccuerpo pr-sesion', 'data-reconocer': '1' }, segmentos(ses), ...visual, ...cuerpo));
     const primero = caja.querySelector(rev ? '#rc-sig' : '.rc-raices button'); if (primero) primero.focus({ preventScroll: true });
   }
   // Marca la raíz o la calidad elegida sin volver a dibujar la pantalla (así no se pierde el foco ni el lugar del dedo).
@@ -164,6 +180,7 @@
     poner(
       barra(atrasBtn('← Salir', 'Salir (Esc)'), 'Resultado'),
       el('div', { className: 'ccuerpo pr-sesion', 'data-reconocer': '1' },
+        cabeceraResultado(a.length, total, h),
         el('h2', { id: 'rc-resultado', tabIndex: -1 }, `${a.length} de ${total} bien · ${Math.round((a.length / total) * 100)}%`),
         a.length ? el('p', { className: 'a' }, 'Tiempo medio de los que acertaste: ' + seg(medio)) : null,
         fallos.length ? el('div', { className: 'parte' }, el('h3', {}, 'Para repasar'), el('div', { className: 'chips' }, ...fallos.map(chip))) : el('p', {}, 'Sin fallos.'),

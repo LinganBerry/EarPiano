@@ -683,14 +683,14 @@ body.presentando { overflow: hidden; }
 .teclado, .pteclado { margin-top: .6rem; margin-bottom: .6rem; }
 
 /* --- Retos: pantalla de inicio (empezar arriba, progreso, y al final los ajustes) --- */
-[data-retos] .rt-inicio { display: grid; grid-template-columns: 1.4fr 1fr; gap: .6rem; margin: .4rem 0 1rem; }
-[data-retos] .rt-inicio button { min-height: 60px; font-size: 1.1rem; font-weight: 750; border-radius: 16px; margin: 0; }
-[data-retos] .rt-inicio .primario { box-shadow: var(--glow); }
+.rt-inicio { display: grid; grid-template-columns: 1.4fr 1fr; gap: .6rem; margin: .4rem 0 1rem; }
+.rt-inicio button { min-height: 60px; font-size: 1.1rem; font-weight: 750; border-radius: 16px; margin: 0; }
+.rt-inicio .primario { box-shadow: var(--glow); }
 #rt-progreso { text-align: left; }
 #rt-progreso > p:first-of-type { font-size: 1.15rem; font-weight: 700; color: var(--ink); }
 
 /* --- Retos: sesión (acorde enorme, avance por segmentos, botones grandes) --- */
-.pr-sesion[data-retos] { display: flex; flex-direction: column; align-items: stretch; padding-top: .8rem; }
+.pr-sesion:is([data-retos],[data-reconocer]) { display: flex; flex-direction: column; align-items: stretch; padding-top: .8rem; }
 .rt-avance { display: flex; flex-direction: column; align-items: center; gap: .35rem; }
 .rt-seg { display: flex; gap: 4px; width: 100%; max-width: 26rem; }
 .rt-seg i { flex: 1; height: 8px; border-radius: 4px; background: var(--fila); box-shadow: inset 0 0 0 1px var(--line); }
@@ -698,8 +698,8 @@ body.presentando { overflow: hidden; }
 .rt-seg i.ahora { background: var(--accent); box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 70%, transparent); }
 .rt-racha { margin: 0; min-height: 1.4rem; font-size: .9rem; font-weight: 700; color: var(--accent-2, var(--accent)); }
 .rt-racha::before { content: "🔥 "; }
-.pr-sesion[data-retos] .rt-acorde { margin: .6rem auto .2rem; padding: .7rem 1.4rem; min-width: 60%; font-size: clamp(4.6rem, 26vw, 7.5rem); line-height: 1; letter-spacing: -.02em; border-radius: 28px; background: var(--vidrio); box-shadow: inset 0 0 0 1px var(--borde), 0 10px 40px rgba(0,0,0,.35), 0 0 60px color-mix(in srgb, var(--accent) 22%, transparent); }
-.pr-sesion[data-retos] .rt-pos { align-self: center; margin: .2rem 0 1rem; padding: .3rem .9rem; font-size: .95rem; font-weight: 650; border-radius: 999px; background: var(--fila); border: 1px solid var(--line); }
+.pr-sesion:is([data-retos],[data-reconocer]) .rt-acorde { margin: .6rem auto .2rem; padding: .7rem 1.4rem; min-width: 60%; font-size: clamp(4.6rem, 26vw, 7.5rem); line-height: 1; letter-spacing: -.02em; border-radius: 28px; background: var(--vidrio); box-shadow: inset 0 0 0 1px var(--borde), 0 10px 40px rgba(0,0,0,.35), 0 0 60px color-mix(in srgb, var(--accent) 22%, transparent); }
+.pr-sesion:is([data-retos],[data-reconocer]) .rt-pos { align-self: center; margin: .2rem 0 1rem; padding: .3rem .9rem; font-size: .95rem; font-weight: 650; border-radius: 999px; background: var(--fila); border: 1px solid var(--line); }
 .rt-botones { gap: .7rem; width: 100%; }
 .rt-botones button { min-height: 64px; font-size: 1.2rem; font-weight: 750; border-radius: 18px; }
 .rt-botones .primario { box-shadow: var(--glow); }
@@ -740,3 +740,45 @@ body.presentando { overflow: hidden; }
 #teoria .chips, #teoria .compas { gap: .36rem; }
 #teoria .chip { min-width: 2.8rem; min-height: 2.6rem; padding: .18rem .52rem; font-size: 1.12rem; border-radius: 13px; }
 #teoria .chip .rom { font-size: .68rem; }
+
+
+/* =====================================================================================
+   v5 · Ideas de Refero + Reconocer + pastillas de Teoría
+   ===================================================================================== */
+:root { --r-btn: 12px; --r-card: 16px; --r-pill: 999px;
+  /* "tecla": reflejo arriba, aro fino y sombra abajo. Da relieve sin desenfoque (ligero para el teléfono). */
+  --tecla: inset 0 1px 0 rgba(255,255,255,.08), 0 0 0 1px rgba(255,255,255,.14), inset 0 -1px 0 rgba(0,0,0,.28); }
+
+/* 2 · Relieve de tecla en burbujas, pastillas y botones secundarios (tema noche) */
+:root[data-tema=escenario] .chip, :root[data-tema=escenario] .ed-chip, :root[data-tema=escenario] .cbarra button,
+:root[data-tema=escenario] .pastillas button:not([aria-pressed=true]), :root[data-tema=escenario] .fila { box-shadow: var(--tecla); border-color: transparent; }
+/* 3 · Bordes finos en lugar de sombras grandes */
+.fila:hover { box-shadow: var(--tecla), 0 0 0 1px rgba(255,255,255,.08); }
+.pr-sesion:is([data-retos],[data-reconocer]) .rt-acorde { box-shadow: var(--tecla), 0 0 40px color-mix(in srgb, var(--accent) 14%, transparent); }
+/* 4 · Buscador como pocito hundido */
+:root[data-tema=escenario] #q { background-color: rgba(0,0,0,.32); box-shadow: inset 0 1px 3px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.1); }
+/* 5 · Esquinas con tres tamaños: botones 12, tarjetas 16, pastillas redondas */
+.chip, #teoria .chip, .ed-chip, .rel .fila > .tono, .fila > .tono { border-radius: var(--r-btn); }
+.parte, .rel, .ed-sec, .capa .campo input, .capa .campo select, .capa .campo textarea { border-radius: var(--r-card); }
+.rt-botones button, .rt-inicio button, #rt-repetir, #rt-opciones { border-radius: var(--r-btn); }
+.pr-sesion:is([data-retos],[data-reconocer]) .rt-acorde { border-radius: var(--r-card); }
+/* 1 · El rosa queda para datos (romanos, áreas); la racha usa el acento de la interfaz */
+.rt-racha { color: var(--accent); }
+
+/* Teoría: pastillas de modo y de tónica un pelito más pequeñas (~12 %) */
+#teoria .pastillas button { min-height: 2.6rem; min-width: 2.6rem; padding: .2rem .8rem; font-size: .93rem; }
+#teoria .pastillas { gap: .4rem; }
+
+/* Reconocer acordes: raíces en cuadrícula pareja, calidad en dos botones grandes, comprobar abajo */
+.rc-q { text-align: center; margin: .6rem 0 .5rem; font-size: 1rem; }
+.rc-raices { display: grid; grid-template-columns: repeat(4, 1fr); gap: .5rem; }
+.rc-raices button { min-height: 3.1rem; padding: .2rem .1rem; border-radius: var(--r-btn); font-size: 1.1rem; font-weight: 700; }
+.rc-raices button.rc-negra { font-size: .92rem; }
+.rc-cal { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; margin: .5rem 0 .9rem; }
+.rc-cal button { min-height: 3.4rem; border-radius: var(--r-btn); font-size: 1.1rem; font-weight: 700; }
+.rc-raices button[aria-pressed=true], .rc-cal button[aria-pressed=true] { background: var(--boton); color: var(--sobre-accent); box-shadow: var(--glow); border-color: transparent; }
+#rc-comprobar[disabled] { opacity: .45; box-shadow: none; }
+.rc-veredicto { margin: 0; font-size: 1.7rem; font-weight: 800; }
+.rc-veredicto.bien { color: #3fcf7a; } .rc-veredicto.mal { color: #ff6b6b; }
+.rc-era { margin: .2rem 0 .5rem; font-size: 1.1rem; font-weight: 650; }
+#rc-sig, #rc-comprobar { width: 100%; }
