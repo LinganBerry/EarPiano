@@ -28,6 +28,12 @@ Toca 5 veces el título (o abre `/?editar`) y pon tu contraseña. Ahí puedes ag
 
 TimerPiano es la otra app: un temporizador de práctica. Al terminar una sesión, su botón **Sumar a EarPiano** te trae aquí el tiempo practicado.
 
+## Canciones de ejemplo
+
+EarPiano arranca vacío: cada persona sube su propio repertorio. Para ver cómo funciona sin escribir nada, hay tres canciones de dominio público en `ejemplos/canciones-ejemplo.json` (Für Elise, Jesu, Joy of Man's Desiring y Oda a la alegría). Los acordes son simplificados y escritos para este proyecto.
+
+Para cargarlas: entra al editor, ve a **Ajustes** -> **Importar copia** y elige ese archivo. Importar solo suma o actualiza: nunca borra tus canciones.
+
 ## Licencia
 
 MIT © 2026 Lingan. Ver [LICENSE](LICENSE).
