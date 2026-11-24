@@ -27,3 +27,7 @@ Toca 5 veces el título (o abre `/?editar`) y pon tu contraseña. Ahí puedes ag
 ## Junto con TimerPiano
 
 TimerPiano es la otra app: un temporizador de práctica. Al terminar una sesión, su botón **Sumar a EarPiano** te trae aquí el tiempo practicado.
+
+## Licencia
+
+MIT © 2026 Lingan. Ver [LICENSE](LICENSE).
