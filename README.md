@@ -2,6 +2,10 @@
 
 Tu repertorio de canciones con acordes, y una zona para practicar piano. Solo tú editas; quien tenga el enlace puede mirar. No necesita cuenta.
 
+## Capturas
+
+<table><tr><td align="center"><img src="docs/EarPiano-inicio.png" width="220" alt="Tu repertorio"><br><sub>Tu repertorio</sub></td><td align="center"><img src="docs/EarPiano-cancion.png" width="220" alt="Una canción con sus acordes"><br><sub>Una canción con sus acordes</sub></td><td align="center"><img src="docs/EarPiano-practicar.png" width="220" alt="Practicar"><br><sub>Practicar</sub></td></tr></table>
+
 ## Lo básico
 
 - **Buscar una canción:** escribe en el buscador y toca la canción.
