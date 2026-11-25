@@ -16,8 +16,6 @@
   const nombre = (n, conOctava = true) => n.l + ALT[n.a] + (conOctava ? n.o : '');
   const bonito = n => n.l + BONITO[n.a];
   const NOMBRES_PC = ['C', 'C#/Db', 'D', 'D#/Eb', 'E', 'F', 'F#/Gb', 'G', 'G#/Ab', 'A', 'A#/Bb', 'B'];
-  const NATURALES_PC = [0, 2, 4, 5, 7, 9, 11], NEGRAS_PC = [1, 3, 6, 8, 10];
-  const esNegra = pc => NEGRAS_PC.includes(((pc % 12) + 12) % 12);
 
   // --- claves (solo sol y fa: las del piano); base = nota de la línea inferior; linea = posición (0 = línea inferior) donde "se apoya" el símbolo ---
   const CLAVES = {
@@ -299,19 +297,6 @@
     partes.push(`<text x="${X}" y="${yPos(pos)}" font-size="${S * 4}" ${fuente} fill="currentColor" text-anchor="middle" aria-hidden="true">\uE0A2</text>`);
     return `<svg xmlns="http://www.w3.org/2000/svg" class="pentagrama" viewBox="0 0 260 150" role="img" aria-label="${C.nombre}: una nota en el pentagrama">${partes.join('')}</svg>`;
   }
-  // Pentagrama con una frase: las notas una tras otra, de izquierda a derecha (solo cabezas, sin alteraciones).
-  function svgFrase(clave, ns) {
-    const C = CLAVES[clave], partes = [], x0 = 92, paso = Math.min(44, 150 / Math.max(1, ns.length - 1));
-    for (const p of [0, 2, 4, 6, 8]) partes.push(`<line x1="8" y1="${yPos(p)}" x2="252" y2="${yPos(p)}" stroke="currentColor" stroke-width="1.2"/>`);
-    partes.push(`<text x="16" y="${yPos(C.linea)}" font-size="${S * 4}" ${fuente} fill="currentColor" aria-hidden="true">${C.glifo}</text>`);
-    ns.forEach((n, i) => {
-      const x = x0 + i * paso, p = posicion(clave, n);
-      if (p <= -2) for (let q = -2; q >= (p % 2 === 0 ? p : p + 1); q -= 2) partes.push(`<line x1="${x - 16}" y1="${yPos(q)}" x2="${x + 16}" y2="${yPos(q)}" stroke="currentColor" stroke-width="1.2"/>`);
-      if (p >= 10) for (let q = 10; q <= (p % 2 === 0 ? p : p - 1); q += 2) partes.push(`<line x1="${x - 16}" y1="${yPos(q)}" x2="${x + 16}" y2="${yPos(q)}" stroke="currentColor" stroke-width="1.2"/>`);
-      partes.push(`<text x="${x}" y="${yPos(p)}" font-size="${S * 4}" ${fuente} fill="currentColor" text-anchor="middle" aria-hidden="true">\uE0A2</text>`);
-    });
-    return `<svg xmlns="http://www.w3.org/2000/svg" class="pentagrama" viewBox="0 0 260 150" role="img" aria-label="${C.nombre}: una frase de ${ns.length} notas en el pentagrama">${partes.join('')}</svg>`;
-  }
   // Pentagrama con varias notas a la vez (un acorde de tríada: terceras apiladas, nunca hay dos notas pegadas).
   // Las alteraciones van escalonadas hacia la izquierda, de la nota más aguda a la más grave, para que no se pisen.
   function svgAcorde(clave, ns) {
@@ -357,7 +342,7 @@
     return `<svg xmlns="http://www.w3.org/2000/svg" class="pteclado" viewBox="0 0 ${14 * W} ${H + 2}" role="${op.interactivo ? 'group' : 'img'}" aria-label="${op.interactivo ? 'Teclado de piano' : 'Teclado de piano con una tecla marcada'}">${blancas.join('')}${negras.join('')}</svg>`;
   }
 
-  const api = { LETRAS, PC, CLAVES, TEMAS, NIVELES_SOL, NIVELES_FA, NOMBRES_PC, nota, indice, deIndice, midi, nombre, bonito, esNegra,
-    elegirTemaDiario, resumenSemana, debiles, lentos, posicion, notaEnPos, nombreMidi, INTERVALOS, ACORDES, NIVELES_TONALIDAD, POS_ARMADURA, tonica, nombreTon, nombreLargo, altEnArmadura, gradoDeEscala, textoAlt, letrasAlt, rotulo, svgArmadura, estadisticas, precision, racha, peso, candidatos, crearPregunta, comprobar, botones, svgPentagrama, svgAcorde, svgFrase, svgTeclado };
+  const api = { LETRAS, PC, CLAVES, TEMAS, NIVELES_SOL, NIVELES_FA, NOMBRES_PC, nota, indice, deIndice, midi, nombre, bonito,
+    elegirTemaDiario, resumenSemana, debiles, lentos, posicion, notaEnPos, nombreMidi, INTERVALOS, ACORDES, NIVELES_TONALIDAD, POS_ARMADURA, tonica, nombreTon, nombreLargo, altEnArmadura, gradoDeEscala, textoAlt, letrasAlt, rotulo, svgArmadura, estadisticas, precision, racha, peso, candidatos, crearPregunta, comprobar, botones, svgPentagrama, svgAcorde, svgTeclado };
   raiz.Notacion = api;
 })(typeof window !== 'undefined' ? window : globalThis);

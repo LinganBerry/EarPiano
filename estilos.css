@@ -50,7 +50,7 @@
   .ebarra b { font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; }
   .ebarra button { padding: .35rem .7rem; font-size: .9rem; }
   .estado { flex: 1; min-width: 3rem; color: var(--muted); font-size: .9rem; }
-  .estado.mal, .estado.alerta { color: var(--peligro); font-weight: 700; }
+  .estado.mal { color: var(--peligro); font-weight: 700; }
   .primario { background: var(--ink); color: var(--bg); border-color: var(--ink); font-weight: 600; }
   .peligro { color: var(--peligro); border-color: var(--peligro); }
   .capa { position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column; background: var(--bg); }
@@ -389,24 +389,6 @@ body.presentando { overflow: hidden; }
   .im-botones { display: flex; gap: .5rem; margin-top: .4rem; }
   .im-botones button { flex: 1; }
 
-/* --- lectura con ritmo y metrónomo (pensado primero para teléfono) --- */
-  .lc-metro { margin: .8rem 0; padding: .7rem .8rem; border: 1px solid var(--line); border-radius: 6px; background: var(--fila2); }
-  .lc-metro > .primario { width: 100%; min-height: 56px; font-size: 1.1rem; }
-  .lc-pulsos { display: flex; justify-content: center; gap: .9rem; margin: .7rem 0 .2rem; }
-  .lc-p { width: 2.4rem; height: 2.4rem; border: 2px solid var(--ink); border-radius: 50%; background: transparent; }
-  .lc-p.acento { border-width: 4px; }
-  .lc-p.on { background: var(--accent); border-color: var(--accent); }
-  .lc-estado { margin: 0 0 .4rem; text-align: center; }
-  .lc-metro-fila { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
-  .lc-metro-fila button { min-width: 56px; min-height: 48px; font-weight: 700; }
-  .lc-tempo-caja { display: flex; flex-direction: column; align-items: center; }
-  .lc-tempo-v { font: 700 1.8rem/1.1 ui-monospace, Menlo, Consolas, monospace; }
-  .lc-metro input[type=range] { width: 100%; min-height: 44px; margin: .3rem 0; accent-color: var(--accent); padding: 0; border: 0; }
-  .lc-cuenta { display: flex; align-items: center; gap: .5rem; min-height: 44px; }
-  .lc-cuenta input { width: 1.3rem; height: 1.3rem; }
-  .rc-n { opacity: .5; }
-  .rc-n.on { opacity: 1; fill: var(--accent); }
-  .lc-metro [hidden] { display: none; }
 
 /* =====================================================================================
    EarPiano · cristal de noche (pensado primero para teléfono)
@@ -446,7 +428,6 @@ body.presentando { overflow: hidden; }
   h1, .t, .ccuerpo h2 { letter-spacing: -.02em; }
   h1 { font-weight: 700; }
   .t { font-weight: 600; }
-  .lc-tempo-v, .pr-pct, .rt-acorde, .tono, .chip, .badge { font-variant-numeric: tabular-nums; }
 
   /* botones, cuadros y pastillas: redondos y de vidrio, con respuesta al tacto */
   button, input, select, textarea { border-radius: var(--radio-s); border-color: var(--borde); background: var(--vidrio); box-shadow: var(--brillo); transition: transform .18s var(--curva), background-color .18s ease, opacity .18s ease; }
@@ -478,20 +459,13 @@ body.presentando { overflow: hidden; }
   #nav button:active { transform: scale(.94); }
   body { padding-bottom: calc(6.4rem + env(safe-area-inset-bottom, 0px)); }
   .aviso-timer { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); border: 1px solid var(--borde); border-radius: 20px; background: var(--vidrio-fuerte); color: var(--ink); box-shadow: 0 4px 14px rgba(0, 0, 0, .4), var(--brillo); }
-  .lc-metro { padding: .9rem; border: 1px solid var(--borde); border-radius: 24px; background: var(--vidrio-fuerte); box-shadow: var(--sombra), var(--brillo); }
-  .lc-metro > .primario { border-radius: 999px; min-height: 58px; }
-  .lc-p { border-color: var(--muted); transition: transform .15s var(--curva), background-color .1s ease; }
-  .lc-p.on { transform: scale(1.14); background: var(--accent); border-color: var(--accent); box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 70%, transparent); }
-  .lc-p.acento { border-color: var(--ink); }
-  .lc-tempo-v { font-weight: 650; letter-spacing: -.03em; }
-  .rc-n.on { fill: var(--accent); }
 
   /* pantallas que entran: deslizan un poco y se asientan con rebote suave */
   @keyframes entra { from { transform: translateY(18px) scale(.985); opacity: 0; } to { transform: none; opacity: 1; } }
   #cancion:not([hidden]), #teoria:not([hidden]), #practica:not([hidden]) { animation: entra .38s var(--curva); }
   @media (prefers-reduced-motion: reduce) {
     #cancion:not([hidden]), #teoria:not([hidden]), #practica:not([hidden]) { animation: none; }
-    button, input, select, textarea, .fila, .lc-p, #nav button { transition: none; }
+    button, input, select, textarea, .fila, #nav button { transition: none; }
     button:active, .abrir:active, .fila:active, #nav button:active { transform: none; }
   }
   /* sin desenfoque en el aparato: el vidrio se vuelve más opaco para que todo se lea igual */
@@ -518,7 +492,7 @@ body.presentando { overflow: hidden; }
   @media (hover: hover) and (pointer: fine) {
     :root[data-tema=escenario] { --vidrio-fuerte: rgba(20, 15, 48, .62); }
     :root[data-tema=papel] { --vidrio-fuerte: rgba(255, 255, 255, .72); }
-    #barra, .cbarra, .capa-t, .capa-p, #nav, .aviso-timer, .lc-metro { -webkit-backdrop-filter: blur(20px) saturate(170%); backdrop-filter: blur(20px) saturate(170%); }
+    #barra, .cbarra, .capa-t, .capa-p, #nav, .aviso-timer { -webkit-backdrop-filter: blur(20px) saturate(170%); backdrop-filter: blur(20px) saturate(170%); }
   }
 
 /* =====================================================================================

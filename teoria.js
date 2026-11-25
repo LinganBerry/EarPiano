@@ -268,7 +268,6 @@
     const base = (q === 'Minor' || q === 'Diminished') ? m[2].toLowerCase() : m[2];
     return m[1].replace(/b/g, '♭').replace(/#/g, '♯') + base + (q === 'Diminished' ? '°' : q === 'Augmented' ? '+' : '');
   }
-  const FUNCION = { T: 'Tónica: reposo', SD: 'Subdominante: se aleja', D: 'Dominante: tensión que pide volver' };
   function tonalidades() {
     const { Key, Chord, Note } = T, menor = est.cual === 'menor';
     const controles = [
