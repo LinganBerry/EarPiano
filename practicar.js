@@ -251,22 +251,41 @@
     if (!T || !T.refrescar) return;
     T.refrescar().then(cambio => { if (cambio && !caja.hidden && pantalla === pantallaEsperada) repintar(); });
   }
+  // --- estadísticas: tarjetas, barras de los últimos 7 días y una barra de acierto por tema ---
+  const colorPct = p => (p == null ? 'var(--line)' : p >= 0.85 ? '#3f9b4a' : p >= 0.6 ? '#d9a400' : 'var(--peligro)');
+  const diaCorto = f => new Date(f + 'T12:00:00').toLocaleDateString('es', { weekday: 'short' }).replace('.', '');
+  const tarjeta = (valor, rotulo) => el('div', { className: 'est-tarjeta' }, el('b', {}, String(valor)), el('span', {}, rotulo));
+  function barrasSemana(semana) {
+    const max = Math.max(1, ...semana.map(d => d.n));
+    return el('div', { className: 'est-barras', rol: 'img', 'aria-label': 'Preguntas por día: ' + semana.map(d => diaCorto(d.f) + ' ' + d.n).join(', ') },
+      ...semana.map((d, i) => el('div', { className: 'est-col' + (i === semana.length - 1 ? ' hoy' : '') },
+        el('i', {}, d.n ? String(d.n) : ''),
+        el('div', { className: 'est-pila' }, el('span', { className: 'est-barra', style: 'height:' + (d.n ? Math.max(6, Math.round(d.n / max * 100)) : 2) + '%;background:' + (d.n ? colorPct(d.a / d.n) : 'var(--line)') })),
+        el('small', {}, diaCorto(d.f)))));
+  }
+  function medidorTema(x, est) {
+    const p = N.precision(est, x.tema, x.nivel);
+    return el('div', { className: 'est-tema' },
+      el('div', { className: 'est-tema-cab' }, el('b', {}, N.TEMAS[x.tema].nombre + ' · nivel ' + x.nivel), el('span', {}, pct(p) + ' · ' + x.t.n + ' preguntas')),
+      el('div', { className: 'est-medidor', rol: 'img', 'aria-label': 'Acierto reciente ' + pct(p) }, el('span', { style: 'width:' + Math.round((p || 0) * 100) + '%;background:' + colorPct(p) })));
+  }
   function pintarEstadisticas() {
     dejarInicio();
     clearTimeout(temporizador); ses = null; pantalla = 'estadisticas'; window.RepertorioAudio?.detener();
     const lista = todas(), est = N.estadisticas(lista), semana = N.resumenSemana(lista, hoy()), deb = N.debiles(est, 8), len = N.lentos(est, 5);
     const total = lista.reduce((x, s) => x + s.n, 0), aciertos = lista.reduce((x, s) => x + s.a, 0);
-    const dia = f => new Date(f + 'T12:00:00').toLocaleDateString('es', { weekday: 'short', day: 'numeric' });
+    const sumaSemana = semana.reduce((x, d) => x + d.n, 0), seguidos = N.racha(lista, hoy());
     const filas = Object.entries(est.temas).map(([k, t]) => { const i = k.lastIndexOf(':'), tema = k.slice(0, i), nivel = Number(k.slice(i + 1)); return { tema, nivel, t }; })
-      .filter(x => N.TEMAS[x.tema]).sort((a, b) => Object.keys(N.TEMAS).indexOf(a.tema) - Object.keys(N.TEMAS).indexOf(b.tema) || a.nivel - b.nivel);
+      .filter(x => N.TEMAS[x.tema] && N.TEMAS[x.tema].niveles.some(v => v.id === x.nivel)).sort((a, b) => Object.keys(N.TEMAS).indexOf(a.tema) - Object.keys(N.TEMAS).indexOf(b.tema) || a.nivel - b.nivel);
     refrescarTimer('estadisticas', pintarEstadisticas);
     caja.replaceChildren(barra(el('button', { type: 'button', title: 'Volver a Practicar', onclick: () => pintarInicio() }, '← Practicar'), 'Estadísticas'),
       el('div', { className: 'ccuerpo' },
         el('h2', { id: 'pr-stats', tabIndex: -1 }, total ? `${total} preguntas · ${pct(aciertos / total)}` : 'Aún no hay práctica'),
         !total && el('p', {}, 'Haz una sesión y aquí verás tu progreso.'),
         tiempoTimer(),
-        total ? el('div', { className: 'parte' }, el('h3', {}, 'Últimos 7 días'), el('div', { className: 'chips' }, ...semana.map(d => el('span', { className: 'chip' }, el('b', {}, dia(d.f)), el('i', { className: 'rom' }, d.n ? d.n + ' · ' + pct(d.a / d.n) : '—'))))) : null,
-        filas.length ? el('div', { className: 'parte' }, el('h3', {}, 'Por tema'), el('ul', { className: 'pr-puntos' }, ...filas.map(x => el('li', {}, `${N.TEMAS[x.tema].nombre} · nivel ${x.nivel}: ${pct(N.precision(est, x.tema, x.nivel))} reciente · ${x.t.n} preguntas`)))) : null,
+        total ? el('div', { className: 'est-resumen' }, tarjeta(semana[semana.length - 1].n, 'hoy'), tarjeta(sumaSemana, '7 días'), tarjeta(pct(aciertos / total), 'aciertos'), tarjeta(seguidos, seguidos === 1 ? 'día seguido' : 'días seguidos')) : null,
+        total ? el('div', { className: 'parte' }, el('h3', {}, 'Últimos 7 días'), barrasSemana(semana)) : null,
+        filas.length ? el('div', { className: 'parte' }, el('h3', {}, 'Por tema'), ...filas.map(x => medidorTema(x, est))) : null,
         deb.length ? el('div', { className: 'parte' }, el('h3', {}, 'Puntos débiles'), el('div', { className: 'chips' }, ...deb.map(d => el('span', { className: 'chip' }, el('b', {}, d.rotulo), el('i', { className: 'rom' }, pct(d.acierto) + ' · ' + d.intentos + ' int.'))))) : null,
         len.length ? el('div', { className: 'parte' }, el('h3', {}, 'Los más lentos'), el('div', { className: 'chips' }, ...len.map(d => el('span', { className: 'chip' }, el('b', {}, d.rotulo), el('i', { className: 'rom' }, d.seg + ' s'))))) : null,
         el('p', {}, el('button', { type: 'button', className: 'primario', onclick: () => empezarDiaria() }, 'Empezar sesión diaria · ' + CFG.minutos + ' min'))));

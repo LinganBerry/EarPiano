@@ -760,3 +760,25 @@ body.presentando { overflow: hidden; }
 /* Reconocer: botones del resultado grandes, igual que en Retos */
 #rc-repetir, #rc-opciones { min-height: 56px; font-weight: 750; border-radius: var(--r-btn); }
 #rc-repetir { box-shadow: var(--glow); }
+
+/* estadísticas */
+.est-resumen { display: grid; grid-template-columns: repeat(4, 1fr); gap: .5rem; margin: .8rem 0; }
+.est-tarjeta { display: flex; flex-direction: column; align-items: center; padding: .6rem .3rem; border: 1px solid var(--line); border-radius: var(--r-t); background: var(--fila); text-align: center; }
+.est-tarjeta b { font: 700 1.6rem/1.1 var(--tit); }
+.est-tarjeta span { font-size: .75rem; color: var(--muted); }
+.est-barras { display: flex; align-items: stretch; gap: .4rem; height: 8.5rem; }
+.est-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: .2rem; min-width: 0; }
+.est-col i { font: 600 .75rem var(--sans); font-style: normal; color: var(--muted); min-height: 1em; }
+.est-pila { flex: 1; width: 100%; display: flex; align-items: flex-end; justify-content: center; }
+.est-barra { display: block; width: 70%; max-width: 2.6rem; min-height: 3px; border-radius: 6px 6px 2px 2px; }
+.est-col small { font-size: .72rem; color: var(--muted); }
+.est-col.hoy small { color: var(--ink); font-weight: 700; }
+.est-tema { margin: .55rem 0; }
+.est-tema-cab { display: flex; justify-content: space-between; gap: .5rem; font-size: .9rem; }
+.est-tema-cab span { color: var(--muted); font-size: .8rem; white-space: nowrap; }
+.est-medidor { height: .55rem; margin-top: .25rem; overflow: hidden; border-radius: 99px; background: var(--line); }
+.est-medidor span { display: block; height: 100%; border-radius: 99px; }
+@media (max-width: 380px) { .est-resumen { grid-template-columns: repeat(2, 1fr); } }
+
+/* el piano de Teoría no se estira de lado a lado en pantallas anchas */
+.teclado { max-width: 38rem; margin-left: auto; margin-right: auto; }

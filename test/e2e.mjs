@@ -320,9 +320,9 @@ test('PRACTICAR: teclado del ordenador (letras, # y -), alteraciones y salir con
   memoria.clear();
   const n = await navegador('');
   await abrirPractica(n);
-  [...n.d.querySelectorAll('[data-tema="sol"] .tg button')].find(b => /^2 /.test(b.textContent)).click();
-  await esperar(() => n.d.querySelector('[data-tema="sol"] [aria-pressed="true"]')?.textContent.startsWith('2'), 'nivel 2 (con alteraciones) elegido');
-  [...n.d.querySelectorAll('[data-tema="sol"] button')].find(b => /Empezar · 20/.test(b.textContent)).click();
+  [...n.d.querySelectorAll('[data-tema="escala"] .tg button')].find(b => /^3 /.test(b.textContent)).click();
+  await esperar(() => n.d.querySelector('[data-tema="escala"] [aria-pressed="true"]')?.textContent.startsWith('3'), 'nivel 3 (mayores hasta 6 alteraciones) elegido');
+  [...n.d.querySelectorAll('[data-tema="escala"] button')].find(b => /Empezar · 20/.test(b.textContent)).click();
   await esperar(() => n.w.RepertorioPractica.estadoSesion()?.preg, 'pregunta con alteraciones');
   assert.ok(n.d.querySelector('[data-mod]'), 'aparecen los botones de alteración');
   for (let i = 0; i < 4; i++) {
@@ -525,6 +525,12 @@ test('PRACTICAR (sesión diaria): mezcla temas, se guarda por tema y termina al 
   // (por eso esta prueba fallaba a veces): se comprueba que la pantalla coincide con lo que calcula la lógica, sea cual sea el azar.
   const hayDebiles = n.w.Notacion.debiles(n.w.Notacion.estadisticas(P.todas()), 8).length > 0;
   assert.equal(/Puntos débiles/.test(txt), hayDebiles, 'Puntos débiles aparece exactamente cuando hay ejercicios débiles');
+  // diseño nuevo: 4 tarjetas, 7 barras (la última es hoy, con las preguntas respondidas) y una barra de acierto por cada tema practicado
+  const tarjetas = [...n.d.querySelectorAll('#practica .est-tarjeta')].map(t => t.textContent);
+  assert.equal(tarjetas.length, 4); assert.match(tarjetas[0], new RegExp(`^${respondidas}hoy$`)); assert.match(tarjetas[2], /^\d+%aciertos$/);
+  const cols = n.d.querySelectorAll('#practica .est-col');
+  assert.equal(cols.length, 7); assert.ok(cols[6].classList.contains('hoy')); assert.equal(cols[6].querySelector('i').textContent, String(respondidas));
+  assert.ok(n.d.querySelectorAll('#practica .est-medidor').length >= 1 && n.d.querySelector('#practica .est-medidor').getAttribute('aria-label').startsWith('Acierto reciente'));
   [...n.d.querySelectorAll('#practica button')].find(b => /← Practicar/.test(b.textContent)).click();
   await esperar(() => n.d.querySelector('#practica .pr-tema'), 'vuelve a Practicar');
   sinErrores(n); n.cerrar();
@@ -982,17 +988,17 @@ test('DATOS GUARDADOS: dañados, de versiones viejas o con tipos raros no rompen
 test('NIVELES GUARDADOS: los de antes de quitar los niveles fáciles se convierten y los que ya no existen se corrigen', async () => {
   memoria.clear();
   const nivelEn = (n, tema) => n.d.querySelector(`[data-tema="${tema}"] [aria-pressed="true"]`)?.textContent.trim().split(' ')[0];
-  // sin versión = de antes: sol 5 (con alteraciones) -> 2; intervalos 4 (todos) -> 3; intervalos 1 se queda en 1; fa no cambia; un tema que no existe se descarta
+  // sin versión = de antes: sol 5 -> 2, que ya no existe y pasa al nivel más alto (1); intervalos 4 (todos) -> 3; intervalos 1 se queda en 1; fa no cambia; un tema que no existe se descarta
   let n = await navegador('', { antes: w => w.localStorage.setItem('repertorio-practica-pref', JSON.stringify({ nivel: { sol: 5, 'int-asc': 4, 'int-desc': 1, fa: 3, xx: 2 } })) });
   await abrirPractica(n);
-  assert.deepEqual(['sol', 'int-asc', 'int-desc', 'fa'].map(t => nivelEn(n, t)), ['2', '3', '1', '3']);
-  assert.deepEqual(JSON.parse(n.w.localStorage.getItem('repertorio-practica-pref')), { v: 2, nivel: { sol: 2, 'int-asc': 3, 'int-desc': 1, fa: 3 } }, 'se guarda ya convertido (y una sola vez)');
+  assert.deepEqual(['sol', 'int-asc', 'int-desc', 'fa'].map(t => nivelEn(n, t)), ['1', '3', '1', '3']);
+  assert.deepEqual(JSON.parse(n.w.localStorage.getItem('repertorio-practica-pref')), { v: 2, nivel: { sol: 1, 'int-asc': 3, 'int-desc': 1, fa: 3 } }, 'se guarda ya convertido (y una sola vez)');
   sinErrores(n); n.cerrar();
   // ya convertidas (v: 2) no se vuelven a bajar; las que se salen del rango pasan al nivel más alto; las raras vuelven al 1
   n = await navegador('', { antes: w => w.localStorage.setItem('repertorio-practica-pref', JSON.stringify({ v: 2, nivel: { sol: 2, 'int-asc': 99, fa: 'x', 'int-arm': 2.5 } })) });
   await abrirPractica(n);
-  assert.deepEqual(['sol', 'int-asc', 'fa', 'int-arm'].map(t => nivelEn(n, t)), ['2', '3', '1', '1']);
-  // y se puede practicar de verdad en esos niveles (sol 2 con alteraciones, intervalos 3 con todos)
+  assert.deepEqual(['sol', 'int-asc', 'fa', 'int-arm'].map(t => nivelEn(n, t)), ['1', '3', '1', '1']);
+  // y se puede practicar de verdad en esos niveles (sol 1 con líneas adicionales, intervalos 3 con todos)
   await empezarTema(n, 'sol', 10);
   assert.ok(n.w.RepertorioPractica.estadoSesion().preg, 'sale una pregunta de sol'); n.w.history.back();
   await esperar(() => n.$('pr-diaria'), 'vuelve al menú');

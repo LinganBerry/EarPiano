@@ -27,19 +27,18 @@
 
   // --- temas y niveles ---
   const rango = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
-  // Clave de sol: ya la dominas en la academia, así que aquí se trabaja lo que da lectura a primera vista: las líneas adicionales (arriba y abajo).
+  // Clave de sol: ya la dominas en la academia, así que aquí solo se trabajan las líneas adicionales (arriba y abajo).
   const LINEAS_3 = [...rango(-6, -1), ...rango(9, 14)], TODO = rango(-6, 14);
   const NIVELES_SOL = [
-    { id: 1, nombre: 'Todo el registro', pos: TODO, alt: false },
-    { id: 2, nombre: 'Con alteraciones', pos: TODO, alt: true }
+    { id: 1, nombre: 'Líneas adicionales (arriba y abajo)', pos: LINEAS_3 }
   ];
   // Clave de fa: la que más se trabaja. Se empieza por lo básico y se llega a las líneas adicionales y a todo el registro.
   const NIVELES_FA = [
-    { id: 1, nombre: 'Líneas', pos: [0, 2, 4, 6, 8], alt: false },
-    { id: 2, nombre: 'Espacios', pos: [1, 3, 5, 7], alt: false },
-    { id: 3, nombre: 'Pentagrama completo', pos: rango(0, 8), alt: false },
-    { id: 4, nombre: 'Líneas adicionales (hasta tres)', pos: LINEAS_3, alt: false },
-    { id: 5, nombre: 'Todo el registro, con alteraciones', pos: TODO, alt: true }
+    { id: 1, nombre: 'Líneas', pos: [0, 2, 4, 6, 8] },
+    { id: 2, nombre: 'Espacios', pos: [1, 3, 5, 7] },
+    { id: 3, nombre: 'Pentagrama completo', pos: rango(0, 8) },
+    { id: 4, nombre: 'Líneas adicionales (hasta tres)', pos: LINEAS_3 },
+    { id: 5, nombre: 'Todo el registro', pos: TODO }
   ];
   // --- oído: intervalos y acordes (semitonos desde la nota más grave) ---
   const INTERVALOS = [
@@ -221,22 +220,14 @@
     if (T.tipo === 'escala') return rango(-N.max, N.max).flatMap(f => GRADOS.map(g => ({ item: T.prefijo + ':' + nombreTon(f, N.modo) + '.' + g, f, g })));
     if (T.tipo === 'pentagrama') {
       const out = [];
-      for (const pos of N.pos) {
-        const alts = N.alt ? [-1, 0, 1] : [0];
-        for (const a of alts) { const n = notaEnPos(tema, pos, a); out.push({ item: tema + ':' + nombre(n), nota: n, pos }); }
-      }
+      for (const pos of N.pos) { const n = notaEnPos(tema, pos); out.push({ item: tema + ':' + nombre(n), nota: n, pos }); }
       return out;
     }
     throw new Error('Tipo de tema desconocido: ' + T.tipo);
   }
-  // Un nivel con alteraciones: ~70 % de las notas llevan alteración (no todas los candidatos pesan igual).
   function crearPregunta(tema, nivel, est, rng, evitar) {
     const T = TEMAS[tema];
-    let cands = candidatos(tema, nivel);
-    if (T.tipo === 'pentagrama' && T.niveles.find(n => n.id === nivel).alt) {
-      cands = cands.map(c => ({ ...c })); // 1 de cada 3 candidatos es natural: se reparte 33 % / 67 %
-    }
-    const c = elegir(cands, est, rng, evitar);
+    const c = elegir(candidatos(tema, nivel), est, rng, evitar);
     if (T.tipo === 'armadura' || T.tipo === 'cuantas' || T.tipo === 'escala') {
       const NV = T.niveles.find(n => n.id === nivel), modo = NV.modo, f = c.f, largo = nombreLargo(f, modo);
       if (T.tipo === 'armadura') return { tema, nivel, tipo: 'armadura', item: c.item, clave: c.clave, f, pedido: modo === 'M' ? '¿Qué tonalidad mayor es?' : '¿Qué tonalidad menor es?', respuesta: { id: String(f) }, etiqueta: nombreTon(f, modo, true), detalle: '(' + textoAlt(f) + (f ? ': ' + letrasAlt(f) : '') + ')' };
@@ -277,7 +268,7 @@
     if (T.tipo === 'oido') return { tipo: 'opciones', opciones: N.ids.map(id => { const d = T.datos.find(x => x.id === id); const interv = T.modo === 'asc' || T.modo === 'desc' || T.modo === 'arm'; return { id, texto: d.nombre, ...(interv ? { sub: d.n + (d.n === 1 ? ' tecla' : ' teclas') } : {}), titulo: d.nombre }; }) };
     if (T.tipo === 'armadura' || T.tipo === 'cuantas') return { tipo: 'opciones', opciones: rango(-N.max, N.max).map(f => (T.tipo === 'armadura' ? { id: String(f), texto: nombreTon(f, N.modo, true), titulo: nombreLargo(f, N.modo) } : { id: String(f), texto: textoAlt(f), titulo: letrasAlt(f) })) };
     if (T.tipo === 'escala') return { tipo: 'letras', letras: LETRAS.slice(), alteraciones: true };
-    if (T.tipo === 'pentagrama') return { tipo: 'letras', letras: LETRAS.slice(), alteraciones: !!N.alt };
+    if (T.tipo === 'pentagrama') return { tipo: 'letras', letras: LETRAS.slice(), alteraciones: false };
     throw new Error('Tipo de tema desconocido: ' + T.tipo);
   }
 

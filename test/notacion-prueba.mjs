@@ -34,10 +34,9 @@ test('niveles: cada candidato cae donde dice el nivel y no hay dobles alteracion
     else if (T.tipo === 'pentagrama') for (const x of c) {
       assert.ok(nv.pos.includes(N.posicion(id, x.nota)), `${id}/${nv.id}: ${N.nombre(x.nota)}`);
       assert.ok(Math.abs(x.nota.a) <= 1);
-      if (!nv.alt) assert.equal(x.nota.a, 0, 'sin alteraciones en niveles 1 a 4');
+      assert.equal(x.nota.a, 0, 'ni sol ni fa preguntan sostenidos ni bemoles');
     } else for (const x of c) assert.ok(nv.pcs.includes(x.pc));
   }
-  assert.ok(N.candidatos('sol', 2).some(x => x.nota.a === 1) && N.candidatos('sol', 2).some(x => x.nota.a === -1));
 });
 
 test('preguntas: 300 por tema y nivel, siempre válidas, con respuesta correcta que comprueba y sin repetir seguida', () => {
@@ -77,7 +76,8 @@ test('lo que fallas sale más que lo que dominas (pesos)', () => {
 
 test('botones de respuesta según tema y nivel', () => {
   assert.deepEqual(JSON.parse(JSON.stringify(N.botones('sol', 1))), { tipo: 'letras', letras: ['C', 'D', 'E', 'F', 'G', 'A', 'B'], alteraciones: false });
-  assert.equal(N.botones('sol', 2).alteraciones, true);
+  for (const [t, v] of [['sol', 1], ['fa', 1], ['fa', 5]]) assert.equal(N.botones(t, v).alteraciones, false, `${t} ${v}: sin botones de sostenido ni bemol`);
+  assert.equal(N.botones('escala', 1).alteraciones, true, 'las escalas sí usan alteraciones');
 });
 
 test('estadísticas, precisión y racha', () => {
@@ -307,12 +307,13 @@ test('oído: progresiones con los acordes correctos, en cualquier tono, y el ser
 
 test('niveles de líneas adicionales: sol se enfoca en ellas y fa sube hasta tres; cada nota se dibuja con sus líneas', () => {
   const sol = N.TEMAS.sol.niveles, fa = N.TEMAS.fa.niveles;
-  assert.deepEqual(JSON.parse(JSON.stringify(sol.map(n => n.id))), [1, 2]);
+  assert.deepEqual(JSON.parse(JSON.stringify(sol.map(n => n.id))), [1]);
   assert.deepEqual(JSON.parse(JSON.stringify(fa.map(n => n.id))), [1, 2, 3, 4, 5]);
-  assert.equal(Math.min(...sol[0].pos), -6); assert.equal(Math.max(...sol[0].pos), 14);   // sol empieza en todo el registro: lo de abajo ya lo cubre la academia
+  assert.equal(Math.min(...sol[0].pos), -6); assert.equal(Math.max(...sol[0].pos), 14);   // sol solo trabaja lo de fuera del pentagrama: lo de adentro ya lo cubre la academia
+  assert.ok(!sol[0].pos.some(p => p >= 0 && p <= 8), 'sol no pregunta dentro del pentagrama');
   assert.deepEqual(JSON.parse(JSON.stringify(fa.slice(0, 3).map(n => n.pos.length))), [5, 4, 9], 'fa conserva líneas, espacios y pentagrama completo');
   assert.equal(Math.min(...fa[3].pos), -6); assert.equal(Math.max(...fa[3].pos), 14);
-  assert.ok(sol[1].alt && fa[4].alt && !sol[0].alt && !fa[3].alt);
+  assert.ok(![...sol, ...fa].some(n => 'alt' in n), 'ni sol ni fa piden alteraciones');
   const cuenta = svg => (svg.match(/<line /g) || []).length - 5;   // las 5 líneas del pentagrama no cuentan
   for (const clave of ['sol', 'fa']) for (const pos of [-6, -5, -4, -3, -2, -1, 0, 8, 9, 10, 11, 12, 13, 14]) {
     const n = N.deIndice(N.CLAVES[clave].base + pos, 0), svg = N.svgPentagrama(clave, n);
