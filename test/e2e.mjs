@@ -1230,3 +1230,22 @@ test('PRACTICAR (oído): progresiones de acordes con números romanos, cuatro ac
   assert.match(n.$('pr-resultado').textContent, /9 de 10 · 90%/);
   sinErrores(n); n.cerrar();
 });
+
+test('EDITOR · botón para entrar desde la página y botón Salir dentro del editor', async () => {
+  memoria.clear();
+  const normal = await navegador('');
+  const entrar = normal.$('enlace-editor');
+  assert.ok(entrar, 'hay un botón de editor en la página');
+  assert.equal(entrar.getAttribute('href'), '?editar'); assert.equal(entrar.hidden, false);
+  assert.ok(entrar.getAttribute('aria-label') && entrar.getAttribute('title'), 'con nombre accesible');
+  sinErrores(normal); normal.cerrar();
+
+  const ed = await navegador('?editar');
+  await esperar(() => ed.d.querySelector('.capa input[type=password]'), 'contraseña');
+  assert.equal(ed.$('enlace-editor').hidden, true, 'dentro del editor el botón de entrar se esconde');
+  const salir = ed.$('e-salir');
+  assert.ok(salir && /Salir/.test(salir.textContent), 'hay un botón Salir en la barra del editor');
+  assert.ok(ed.d.querySelector('#editor .ebarra').contains(salir));
+  sinErrores(ed); ed.cerrar();
+});
+

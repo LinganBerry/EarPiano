@@ -364,6 +364,7 @@
   }
 
   $('editor').replaceChildren(el('div', { className: 'ebarra' },
+    el('button', { type: 'button', id: 'e-salir', title: 'Volver a la página (sigues con tu sesión)', onclick: salir }, '← Salir'),
     el('b', { id: 'e-titulo' }, 'Editor'),
     el('span', { id: 'estado', className: 'estado', 'aria-live': 'polite' }, 'Listo'),
     el('button', { type: 'button', onclick: abrirAjustes }, 'Ajustes'),
