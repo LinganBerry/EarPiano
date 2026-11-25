@@ -1244,6 +1244,9 @@ test('EDITOR · botón para entrar desde la página y botón Salir dentro del ed
   assert.ok(entrar, 'hay un botón de editor en la página');
   assert.equal(entrar.getAttribute('href'), '?editar'); assert.equal(entrar.hidden, false);
   assert.ok(entrar.getAttribute('aria-label') && entrar.getAttribute('title'), 'con nombre accesible');
+  const trazo = Number(entrar.querySelector('svg').getAttribute('stroke-width'));
+  assert.ok(trazo >= 1 && trazo <= 3, 'el trazo del lápiz es fino (con 22 se veía como un cuadro negro): ' + trazo);
+  assert.equal(entrar.querySelector('svg').getAttribute('width'), '22');
   sinErrores(normal); normal.cerrar();
 
   const ed = await navegador('?editar');
