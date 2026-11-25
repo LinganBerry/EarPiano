@@ -13,7 +13,7 @@ console.log(`Toques al azar: semilla ${SEMILLA}, ${PASOS} pasos × ${RONDAS} ron
 
 const TEXTOS = ['', 'a', 'G D Em C', 'zzzz', '💥', '<img src=x onerror=alert(1)>', 'x'.repeat(600), '0', '-1', '99999', '  ', 'Do♯ Re♭', 'C/E | F#m7b5', "'\";--"];
 const HASHES = ['#timer=abc123def456.2026-11-16.300-0-0-0', '#timer=roto', '#timer=abc123def456.2030-01-01.1-1-1-1', '#plan=solfeo-5', '#x', '#timer=', '#timer=zzzzzzzzzzzz.2026-02-31.1-1-1-1', ''];
-const DANAR = ['repertorio-practica-v1', 'repertorio-retos-v1', 'repertorio-timer-v1', 'repertorio-lectura-ritmo', 'repertorio-lectura-pref', 'repertorio-practica-pref'];
+const DANAR = ['repertorio-practica-v1', 'repertorio-retos-v1', 'repertorio-timer-v1', 'repertorio-practica-pref'];
 const RAROS = ['null', '7', '"texto"', '{"ses":5}', '[1,2]', '{', '{"ritmo":9,"tempo":"x"}'];
 
 const fallos = [];

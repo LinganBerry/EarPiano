@@ -41,7 +41,7 @@ const redOk = { fetch: async r => new Response(new URL(r.url).pathname.startsWit
 test('instalación: guarda la página y los datos, pero NO precarga Tone.js, Tonal ni el piano', async () => {
   const e = entorno(redOk); await e.instalar();
   const guardado = [...e.almacenes.get(CACHE).keys()];
-  for (const u of ['/', '/index.html', '/estilos.css', '/app.js', '/teoria.js', '/notacion.js', '/lecciones.js', '/practicar.js', '/sorpresa.js', '/improvisar.js', '/editor.js', '/canciones.js', '/local.js', '/romanos.js', '/analisis.js', '/manifest.webmanifest', '/icono-192.png', '/api/canciones']) assert.ok(guardado.includes(u), 'falta ' + u);
+  for (const u of ['/', '/index.html', '/estilos.css', '/app.js', '/teoria.js', '/notacion.js', '/lecciones.js', '/practicar.js', '/improvisar.js', '/editor.js', '/canciones.js', '/local.js', '/romanos.js', '/analisis.js', '/manifest.webmanifest', '/icono-192.png', '/api/canciones']) assert.ok(guardado.includes(u), 'falta ' + u);
   assert.ok(!guardado.some(u => u.startsWith('/vendor/')), 'no debe precargar /vendor/: ' + guardado.filter(u => u.startsWith('/vendor/')));
 });
 

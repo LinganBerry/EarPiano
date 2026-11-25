@@ -29,12 +29,10 @@ async function responder(n, cuantas, fallos = 0) {
   }
 }
 const empezarSol = n => [...n.d.querySelectorAll('[data-tema="sol"] button')].find(b => /Empezar · 10/.test(b.textContent)).click();
-async function abrirLectura(n) { await abrirPractica(n); n.$('pr-lectura-ir').click(); await esperar(() => n.$('lc-empezar'), 'menú de lectura'); }
 async function cerrarPractica(n) { for (let i = 0; i < 5 && !n.$('practica').hidden; i++) { n.tecla(n.d, 'Escape'); await dormir(80); } assert.equal(n.$('practica').hidden, true, 'Practicar se cierra con Esc'); }
 async function atras(n, esperarA, que) { n.w.history.back(); await esperar(esperarA, que); }
-const op = (n, c, v) => n.d.querySelector(`[data-op="${c}:${v}"]`);
 
-test('RECORRIDO COMPLETO: abrir, buscar una canción, practicar (lectura con ritmo y preguntas) y sumar una sesión de TimerPiano', async () => {
+test('RECORRIDO COMPLETO: abrir, buscar una canción, practicar (preguntas) y sumar una sesión de TimerPiano', async () => {
   memoria.clear(); sembrar([['Cuán grande es Él', 'G', ['Coro', 'G D Em C']], ['Aleluya', 'C', ['Coro', 'C G Am F']], ['Santo', 'D', ['Verso', 'D A Bm G']]]);
   const n = await navegador('');
   const { d, $, escribir, tecla, w } = n;
@@ -46,17 +44,7 @@ test('RECORRIDO COMPLETO: abrir, buscar una canción, practicar (lectura con rit
   tecla(d, 'Escape'); await esperar(() => $('cancion').hidden || $('cancion').classList.contains('oculta'), 'cerrar con Esc'); await dormir(150);
   escribir($('q'), ''); await esperar(() => d.querySelectorAll('#lista .fila').length === 3, 'borrar la búsqueda');
 
-  await abrirPractica(n);                                      // Lectura con ritmo
-  n.$('pr-lectura-ir').click(); await esperar(() => $('lc-empezar'), 'menú de lectura');
-  op(n, 'ritmo', 'silencios').click(); op(n, 'compas', '3/4').click(); $('lc-empezar').click();
-  await esperar(() => $('lc-metro'), 'frase con metrónomo');
-  assert.equal(d.querySelectorAll('svg.pentagrama .rc-n').length, 3, 'tres tiempos en 3/4');
-  $('lc-metro-play').click(); assert.equal($('lc-metro-play').getAttribute('aria-pressed'), 'true');
-  await esperar(() => /Cuenta/.test($('lc-estado').textContent), 'cuenta de entrada');
-  $('lc-boton').click(); assert.ok($('lc-notas').textContent.length > 0);   // ver cuáles son (el metrónomo sigue)
-  assert.equal($('lc-metro-play').getAttribute('aria-pressed'), 'true', 'ver la respuesta no corta el metrónomo');
-  await atras(n, () => $('lc-empezar'), 'menú de lectura otra vez');
-  await atras(n, () => $('pr-lectura-ir'), 'menú de Practicar');
+  await abrirPractica(n);
 
   empezarSol(n); await esperar(() => ESTADO_PRACTICA(n)?.preg, 'primera pregunta');
   await responder(n, 10, 2); await esperar(() => $('pr-resultado'), 'resultado');
@@ -70,66 +58,12 @@ test('RECORRIDO COMPLETO: abrir, buscar una canción, practicar (lectura con rit
   sinErrores(n); n.cerrar();
 });
 
-test('LECTURA CON RITMO: opciones que se recuerdan, metrónomo con clic, tempo 50–120, cuenta de entrada y se apaga al salir', async () => {
-  memoria.clear();
-  const n = await navegador('', { audio: true });
-  const { $, d, w } = n;
-  await abrirLectura(n);
-  assert.equal(op(n, 'ritmo', 'largas').getAttribute('aria-pressed'), 'true'); assert.equal(op(n, 'compas', '4/4').getAttribute('aria-pressed'), 'true');
-  op(n, 'ritmo', 'corcheas').click(); op(n, 'compas', '3/4').click();
-  assert.deepEqual(JSON.parse(w.localStorage.getItem('repertorio-lectura-ritmo')), { ritmo: 'corcheas', compas: '3/4', tempo: 70, cuenta: true });
-  assert.deepEqual(JSON.parse(w.localStorage.getItem('repertorio-lectura-pref')), { clave: 'ambas', movimiento: 'grados' }, 'la preferencia vieja sigue con su forma de siempre');
-  $('lc-empezar').click(); await esperar(() => $('lc-metro'), 'frase');
-  assert.equal(d.querySelectorAll('svg.pentagrama .rc-n').length, 3); assert.equal(d.querySelectorAll('#lc-pulsos .lc-p').length, 3);
-  assert.equal($('lc-estado').textContent, 'Parado'); assert.equal($('lc-sin-sonido').hidden, true);
-  // tempo
-  assert.equal($('lc-tempo').min, '50'); assert.equal($('lc-tempo').max, '120');
-  for (let i = 0; i < 20; i++) $('lc-tempo-mas').click(); assert.equal($('lc-tempo-valor').textContent, '120');
-  for (let i = 0; i < 20; i++) $('lc-tempo-menos').click(); assert.equal($('lc-tempo-valor').textContent, '50');
-  n.escribir($('lc-tempo'), '120'); assert.equal(JSON.parse(w.localStorage.getItem('repertorio-lectura-ritmo')).tempo, 120);
-  // metrónomo a 120: la cuenta de entrada son 3 pulsos
-  $('lc-metro-play').click();
-  assert.equal($('lc-metro-play').textContent, '■ Parar');
-  await esperar(() => d.querySelector('#lc-pulsos .lc-p.on'), 'primer pulso', 2000);
-  assert.match($('lc-estado').textContent, /Cuenta/);
-  await esperar(() => $('lc-estado').textContent === 'Toca', 'fin de la cuenta', 3000);
-  assert.ok(w.__clics.length >= 3 && w.__clics[0].f === 1760 && w.__clics[1].f === 1175, 'clic agudo en el 1 y grave en los demás: ' + JSON.stringify(w.__clics.slice(0, 3)));
-  const enPantalla = [...d.querySelectorAll('svg.pentagrama .rc-n.on')].length; assert.ok(enPantalla <= 1);
-  // sale: se apaga y ya no suenan clics
-  w.history.back(); await esperar(() => $('lc-empezar'), 'menú');
-  const clics = w.__clics.length; await dormir(700); assert.equal(w.__clics.length, clics, 'después de salir no sigue sonando');
-  // vuelve, sin cuenta de entrada
-  $('lc-empezar').click(); await esperar(() => $('lc-metro'), 'frase otra vez');
-  assert.equal($('lc-tempo-valor').textContent, '120', 'recuerda el tempo');
-  $('lc-cuenta').click(); assert.equal(JSON.parse(w.localStorage.getItem('repertorio-lectura-ritmo')).cuenta, false);
-  $('lc-metro-play').click(); await esperar(() => $('lc-estado').textContent === 'Toca', 'empieza directo, sin cuenta', 1500);
-  // si se oculta la pantalla, se detiene
-  Object.defineProperty(d, 'hidden', { configurable: true, get: () => true }); d.dispatchEvent(new w.Event('visibilitychange'));
-  assert.equal($('lc-metro-play').getAttribute('aria-pressed'), 'false'); assert.equal($('lc-estado').textContent, 'Parado');
-  sinErrores(n); n.cerrar();
-});
-
-test('LECTURA CON RITMO sin Web Audio: se ve el pulso y avisa que no hay sonido', async () => {
-  memoria.clear();
-  const n = await navegador('');
-  await abrirLectura(n);
-  op(n, 'ritmo', 'negras').click(); n.$('lc-empezar').click(); await esperar(() => n.$('lc-metro'), 'frase');
-  n.escribir(n.$('lc-tempo'), '120'); n.$('lc-cuenta').click();
-  n.$('lc-metro-play').click();
-  assert.equal(n.$('lc-sin-sonido').hidden, false);
-  await esperar(() => n.d.querySelector('#lc-pulsos .lc-p.on') && n.$('lc-estado').textContent === 'Toca', 'pulsos a la vista', 2000);
-  assert.ok(n.d.querySelector('svg.pentagrama .rc-n.on') || true);
-  n.$('lc-metro-play').click(); assert.equal(n.$('lc-estado').textContent, 'Parado'); assert.equal(n.d.querySelector('#lc-pulsos .lc-p.on'), null);
-  sinErrores(n); n.cerrar();
-});
-
-test('SIN INTERNET: la página abre con lo guardado, Practicar y Lectura funcionan y la sesión de TimerPiano se suma igual', async () => {
+test('SIN INTERNET: la página abre con lo guardado, Practicar funciona y la sesión de TimerPiano se suma igual', async () => {
   memoria.clear();
   const n = await navegador('', { caido: true });
   await esperar(() => n.d.querySelectorAll('#lista .fila').length > 0 || n.$('sin-red').hidden === false, 'lista o aviso sin conexión');
   assert.equal(n.$('sin-red').hidden, false);
-  await abrirLectura(n); op(n, 'ritmo', 'silencios').click(); n.$('lc-empezar').click(); await esperar(() => n.$('lc-metro'), 'frase sin red');
-  await atras(n, () => n.$('lc-empezar'), 'menú'); await atras(n, () => n.$('pr-lectura-ir'), 'menú de Practicar');
+  await abrirPractica(n);
   empezarSol(n); await esperar(() => ESTADO_PRACTICA(n)?.preg, 'pregunta sin red'); await responder(n, 10, 0);
   await esperar(() => n.$('pr-resultado'), 'resultado sin red'); assert.match(n.$('pr-resultado').textContent, /10 de 10/);
   const f = n.w.RepertorioTimer.fecha();
@@ -153,27 +87,11 @@ test('ALMACENAMIENTO bloqueado o lleno: todo funciona en esta visita (no se guar
     memoria.clear(); sembrar([['Aleluya', 'C', ['Coro', 'C G Am F']]]);
     const n = await navegador('', { almacen });
     assert.equal(n.d.querySelectorAll('#lista .fila').length, 1, almacen);
-    await abrirLectura(n);
-    op(n, 'ritmo', 'silencios').click(); op(n, 'compas', '4/4').click(); n.$('lc-empezar').click(); await esperar(() => n.$('lc-metro'), 'frase');
-    n.$('lc-tempo-mas').click(); n.$('lc-metro-play').click(); n.$('lc-metro-play').click(); n.$('lc-boton').click(); n.$('lc-boton').click();
-    await atras(n, () => n.$('lc-empezar'), 'menú'); await atras(n, () => n.$('pr-lectura-ir'), 'menú de Practicar');
+    await abrirPractica(n);
     empezarSol(n); await esperar(() => ESTADO_PRACTICA(n)?.preg, 'pregunta'); await responder(n, 10, 3);
     await esperar(() => n.$('pr-resultado'), 'resultado'); assert.match(n.$('pr-resultado').textContent, /7 de 10/, almacen);
     n.w.location.hash = `#timer=abc123def456.${n.w.RepertorioTimer.fecha()}.60-0-0-0`; await esperar(() => aviso(n), 'aviso de TimerPiano ' + almacen);
     sinErrores(n); n.cerrar();
-  }
-});
-
-test('DATOS GUARDADOS dañados o de versiones viejas en la lectura con ritmo: vuelve a lo normal sin errores', async () => {
-  const RAROS = [null, 7, true, 'texto', '{"ritmo":', [], [1, 2], {}, { ritmo: 9, compas: [], tempo: 'x', cuenta: 'sí' }, { ritmo: 'silencios', compas: '5/8', tempo: -4 }, { tempo: 1e9 }, { ritmo: 'silencios', compas: '3/4', tempo: 99, cuenta: false }];
-  for (const clave of ['repertorio-lectura-ritmo', 'repertorio-lectura-pref']) for (const v of RAROS) {
-    const n = await navegador('', { antes: w => w.localStorage.setItem(clave, typeof v === 'string' ? v : JSON.stringify(v)) });
-    await abrirLectura(n);
-    for (const [c, vals] of [['ritmo', ['largas', 'negras', 'corcheas', 'silencios']], ['compas', ['4/4', '3/4']]]) assert.equal(vals.filter(x => op(n, c, x).getAttribute('aria-pressed') === 'true').length, 1, `${clave}=${JSON.stringify(v)}: una sola opción de ${c}`);
-    n.$('lc-empezar').click(); await esperar(() => n.$('lc-boton'), 'frase');
-    const t = Number(n.$('lc-tempo-valor') ? n.$('lc-tempo-valor').textContent : 70); assert.ok(t >= 50 && t <= 120, 'tempo ' + t);
-    n.$('lc-boton').click(); n.$('lc-boton').click();
-    assert.deepEqual(n.errores, [], `${clave}=${JSON.stringify(v)}\n` + n.errores.join('\n')); n.cerrar();
   }
 });
 

@@ -18,8 +18,6 @@ Tu repertorio de canciones con acordes, y una zona para practicar piano. Solo t�
 
 Toca **Practicar**. Ahí hay lectura de notas, teclado, escalas, oído, lecciones cortas y retos. Los retos no usan sonido ni internet.
 
-Dentro de los retos está **Lectura a primera vista**: sale una frase, la lees y la tocas en tu piano. Puedes agregar ritmo y un metrónomo con tempo de 50 a 120.
-
 ## Teoría
 
 Escalas, modos, acordes y el círculo de quintas.

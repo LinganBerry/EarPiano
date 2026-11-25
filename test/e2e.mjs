@@ -890,48 +890,6 @@ test('RECONOCER ACORDES: ver el acorde, elegir raíz y calidad, comprobar, pista
   sinErrores(n); n.cerrar();
 });
 
-test('LECTURA A PRIMERA VISTA: frase en el pentagrama, ver cuáles son (con piano en sol), otra frase y Atrás', async () => {
-  memoria.clear();
-  const n = await navegador('');
-  const caja = await abrirPractica(n);
-  n.$('pr-lectura-ir').click();
-  await esperar(() => n.$('lc-empezar'), 'menú de lectura');
-  const op = (c, v) => n.d.querySelector(`[data-op="${c}:${v}"]`);
-  assert.equal(op('clave', 'ambas').getAttribute('aria-pressed'), 'true'); assert.equal(op('movimiento', 'grados').getAttribute('aria-pressed'), 'true');
-  op('clave', 'sol').click(); op('movimiento', 'saltos').click();
-  assert.deepEqual(JSON.parse(n.w.localStorage.getItem('repertorio-lectura-pref')), { clave: 'sol', movimiento: 'saltos' });
-  n.w.Math.random = () => 0.5;
-  n.$('lc-empezar').click();
-  await esperar(() => n.$('lc-boton'), 'primera frase');
-  assert.match(n.d.querySelector('.cbarra').textContent, /Frase 1/);
-  const heads = () => [...n.d.querySelectorAll('svg.pentagrama text')].filter(t => t.textContent === '\uE0A2').length;
-  assert.equal(heads(), 4); assert.ok(n.d.querySelector('svg.pentagrama').textContent.includes('\uE050'), 'clave de sol');
-  assert.equal(n.$('lc-notas'), null, 'los nombres no se ven antes'); assert.equal(n.$('lc-boton').textContent, 'Ver cuáles son');
-  n.$('lc-boton').click();
-  assert.equal(n.$('lc-notas').textContent.split(' – ').length, 4);
-  const marcadas = [...n.d.querySelectorAll('svg.pteclado .pk-on')];
-  assert.ok(marcadas.length >= 2 && marcadas.length <= 4, 'las notas marcadas en el piano');
-  assert.equal(n.$('lc-boton').textContent, 'Otra frase');
-  n.$('lc-boton').click();
-  assert.match(n.d.querySelector('.cbarra').textContent, /Frase 2/); assert.equal(n.$('lc-notas'), null);
-
-  n.w.history.back();                                          // Atrás en una frase: menú
-  await esperar(() => n.$('lc-empezar'), 'menú otra vez');
-  op('clave', 'fa').click();
-  n.$('lc-empezar').click();
-  await esperar(() => n.$('lc-boton'), 'frase en clave de fa');
-  assert.ok(n.d.querySelector('svg.pentagrama').textContent.includes('\uE062'), 'clave de fa');
-  n.$('lc-boton').click();
-  assert.equal(n.d.querySelector('svg.pteclado'), null, 'en fa las notas quedan fuera del teclado dibujado');
-  n.w.history.back();
-  await esperar(() => n.$('lc-empezar'), 'menú');
-  n.w.history.back();                                          // Atrás desde el menú: menú de Practicar
-  await esperar(() => n.$('pr-diaria') && n.$('pr-lectura-ir'), 'menú de Practicar');
-  n.w.history.back();
-  await esperar(() => n.$('practica').hidden, 'sale de Practicar');
-  sinErrores(n); n.cerrar();
-});
-
 test('TIMERPIANO: llega con una sesión, avisa, no se repite, se ve en Estadísticas y la fila abre TimerPiano con el plan', async () => {
   memoria.clear();
   const h = new Date(), f = `${h.getFullYear()}-${String(h.getMonth() + 1).padStart(2, '0')}-${String(h.getDate()).padStart(2, '0')}`;
@@ -982,7 +940,7 @@ test('PRACTICAR · menú ordenado: Hoy, Retos y Herramientas arriba; los temas s
   const grupos = [...n.d.querySelectorAll('#practica h2.pr-grupo')].map(h => h.textContent);
   assert.deepEqual(grupos.slice(0, 3), ['Hoy', 'Retos', 'Herramientas']);
   assert.ok(n.$('pr-g-herr').contains(n.$('pr-timer')), 'TimerPiano está en Herramientas'); assert.equal(n.$('pr-g-retos').contains(n.$('pr-timer')), false);
-  for (const id of ['pr-retos', 'pr-reconocer', 'pr-lectura', 'pr-escalas']) assert.ok(n.$('pr-g-retos').contains(n.$(id)), id + ' en Retos');
+  for (const id of ['pr-retos', 'pr-reconocer', 'pr-escalas']) assert.ok(n.$('pr-g-retos').contains(n.$(id)), id + ' en Retos');
   const temas = n.$('pr-g-temas');
   assert.equal(temas.tagName, 'DETAILS'); assert.equal(temas.open, false, 'plegado al entrar'); assert.equal(temas.querySelector('summary').textContent, 'Ejercicios por tema');
   assert.ok(temas.querySelector('[data-tema="sol"]') && temas.querySelector('[data-tema="int-asc"]'), 'los temas siguen ahí dentro');
@@ -1081,53 +1039,6 @@ test('TEORÍA · Escalas: 12 tónicas (una por tono), nombre más limpio, 5 otra
   // Crédito: solo lo que exige la licencia del piano
   assert.match(t.textContent, /Salamander Grand Piano de Alexander Holm/); assert.match(t.textContent, /CC BY 3\.0/);
   assert.doesNotMatch(t.textContent, /librería Tonal|Tone\.js/);
-  sinErrores(n); n.cerrar();
-});
-
-test('PRACTICAR · Canción sorpresa: sale una canción sin acordes a la vista, no repite hasta agotar y abre la canción', async () => {
-  memoria.clear();
-  sembrar([['Aleluya', 'G', ['Coro', 'G D | Em C']], ['Brillas', 'C', ['Coro', 'C G Am F']], ['Vacía', 'D']]);
-  const n = await navegador();
-  const { d, $, tecla, w } = n;
-  await esperar(() => d.querySelectorAll('#lista .fila').length === 3, 'las 3 canciones');
-  const pr = await abrirPractica(n);
-  pr.querySelector('#pr-sorpresa-ir').click();
-  await esperar(() => $('so-ir') && !$('so-ir').disabled, 'menú de Canción sorpresa');
-  assert.match($('so-cuenta').textContent, /3 canciones/);
-  $('so-ir').click();
-  await esperar(() => $('so-titulo'), 'primera canción');
-  assert.ok($('so-tono').textContent.length > 0);
-  assert.equal($('so-acordes'), null, 'antes de ver, no se muestran los acordes');
-  const vistas = [$('so-titulo').textContent];
-  $('so-ver').click();
-  await esperar(() => $('so-acordes'), 'acordes revelados');
-  assert.ok($('so-abrir') && $('so-abrir').textContent === 'Abrir «' + vistas[0] + '»');
-  for (let i = 0; i < 2; i++) {
-    const antes = $('so-titulo').textContent;
-    $('so-otra').click();
-    await esperar(() => $('so-titulo') && $('so-titulo').textContent !== antes, 'otra canción');
-    vistas.push($('so-titulo').textContent);
-  }
-  assert.equal(new Set(vistas).size, 3, 'las 3 distintas antes de repetir: ' + vistas);
-  assert.match(d.querySelector('#practica .ctitulo').textContent, /Última de la vuelta/);
-  $('so-otra').click();
-  await esperar(() => $('so-vuelta'), 'empieza una vuelta nueva');
-  assert.notEqual($('so-titulo').textContent, vistas[2], 'la última no sale de seguido');
-  $('so-ver').click();
-  await esperar(() => $('so-abrir'), 'revelar');
-  const titulo = $('so-titulo').textContent;
-  $('so-abrir').click();
-  const caja = $('cancion');
-  await esperar(() => !caja.hidden && caja.getAttribute('aria-label') === titulo, 'se abre ' + titulo);
-  tecla(d, 'Escape');
-  await esperar(() => caja.hidden, 'Esc cierra la canción');
-  await new Promise(r => setTimeout(r, 400));
-  assert.equal(pr.hidden, false, 'Practicar sigue abierto'); assert.ok($('so-titulo'), 'y la sorpresa sigue en pantalla');
-  // Atrás desde la canción vuelve al menú de la sorpresa; otra vez atrás, al menú de Practicar
-  w.history.back();
-  await esperar(() => $('so-ir') && !$('so-titulo'), 'atrás vuelve al menú de la sorpresa');
-  w.history.back();
-  await esperar(() => $('pr-sorpresa-ir'), 'y luego al menú de Practicar');
   sinErrores(n); n.cerrar();
 });
 
