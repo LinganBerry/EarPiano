@@ -18,7 +18,7 @@
       compases: [['1P', 'm7', 'i7'], ['7m', '7', '♭VII7'], ['6m', 'maj7', '♭VImaj7'], ['5P', '7', 'V7']] }
   ];
   const TONOS = [['C', 'C'], ['Db', 'D♭'], ['D', 'D'], ['Eb', 'E♭'], ['E', 'E'], ['F', 'F'], ['F#', 'F♯'], ['G', 'G'], ['Ab', 'A♭'], ['A', 'A'], ['Bb', 'B♭'], ['B', 'B']];
-  const TEMPOS = [60, 80, 100];   // pulsos por minuto; cada acorde dura un compás de 4 pulsos
+  const TEMPOS = [60, 80, 100, 120, 140, 160, 180, 200];   // pulsos por minuto; cada acorde dura un compás de 4 pulsos
   const MODOS = { maj7: ['major', 'Jónico'], 7: ['mixolydian', 'Mixolidio'], m7: ['aeolian', 'Eólico'] };   // el ii7 es la excepción: ver construir()
   const bonito = t => String(t).replace(/#/g, '♯').replace(/([A-G])b/g, '$1♭');
 
@@ -77,7 +77,7 @@
     n.append(...kids.flat().filter(k => k != null && k !== false));
     return n;
   };
-  let caja = null, volverFn = null, M = null, cargando = false;
+  let caja = null, volverFn = null, M = null, cargando = false, ayudaAbierta = true;   // la ayuda empieza abierta y se queda como la dejes
   let tono = 'C', base = 'ii-V-I', bpm = 80, acordes = null, tocando = false, pos = 0, cuenta = 0, bloque = 0, reloj = null, foco = null;
   const barra = (izq, centro) => el('div', { className: 'cbarra' }, izq, el('span', { className: 'ctitulo' }, centro));
   const poner = (...hijos) => { caja.replaceChildren(...hijos); caja.scrollTop = 0; };
@@ -144,7 +144,14 @@
         previo ? el('p', { className: 'a', id: 'im-sig' }, '') : null,
         previo ? el('p', { className: 'a', id: 'im-escala' }, '') : null,
         previo ? el('div', { className: 'compas', id: 'im-fila' }, ...previo.map(a => el('span', { className: 'chip' }, el('b', {}, bonito(a.simbolo)), el('i', { className: 'rom' }, a.romano)))) : null,
-        el('p', {}, 'Elige un tono y una base: suena en bucle y tú improvisas encima. Primero toca solo las notas guía (3ª y 7ª); luego únelas con las notas de la escala.'),
+        el('details', { className: 'parte', id: 'im-ayuda', open: ayudaAbierta, ontoggle: e => { ayudaAbierta = e.target.open; } },
+          el('summary', {}, '¿Cómo se usa?'),
+          el('ol', {},
+            el('li', {}, 'Elige el ', el('b', {}, 'tono'), ' (la nota de la que parte todo) y una ', el('b', {}, 'base'), ' (la secuencia de acordes).'),
+            el('li', {}, 'Toca ', el('b', {}, '▶ Tocar base'), ': el piano de la app repite esos acordes en bucle, un acorde por compás, sin parar.'),
+            el('li', {}, 'Tú tocas ', el('b', {}, 'encima'), ' en tu piano, con la mano derecha, mientras suena. Empieza solo con las ', el('b', {}, 'notas guía'), ' que salen arriba (3ª y 7ª de cada acorde): una por compás, aunque sea lento.'),
+            el('li', {}, 'Cuando eso te salga, une las guías con las notas de la ', el('b', {}, 'escala'), ' que dice la pantalla.'),
+            el('li', {}, 'Si va muy rápido, baja la ', el('b', {}, 'velocidad'), '; si te queda lento, súbela. ', el('b', {}, '■ Parar'), ' detiene todo.'))),
         el('h3', {}, 'Tono'), grupo('Tono', TONOS.map(t => [t[0], t[1]]), tono, id => { tono = id; acordes = null; cambiar(); }, 'data-tono'),
         el('h3', {}, 'Base'), grupo('Base', PLANTILLAS.map(p => [p.id, p.nombre]), base, id => { base = id; acordes = null; cambiar(); }, 'data-base'),
         el('p', { className: 'a', id: 'im-base-texto' }, pl.texto),

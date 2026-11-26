@@ -1167,7 +1167,8 @@ test('PRACTICAR · Improvisación: base en bucle con notas guía, cambia de acor
   w.RepertorioAudio = { tocar: async p => { llamadas.push(JSON.parse(JSON.stringify(p))); }, detener: () => { paradas++; } };
   pr.querySelector('#pr-improv-ir').click();
   await esperar(() => $('im-tocar') && !$('im-tocar').disabled, 'teoría cargada');
-  assert.equal(pr.querySelectorAll('[data-tono]').length, 12); assert.equal(pr.querySelectorAll('[data-base]').length, 5); assert.equal(pr.querySelectorAll('[data-bpm]').length, 3);
+  assert.equal(pr.querySelectorAll('[data-tono]').length, 12); assert.equal(pr.querySelectorAll('[data-base]').length, 5); assert.equal(pr.querySelectorAll('[data-bpm]').length, 8); assert.ok(pr.querySelector('[data-bpm="200"]') && pr.querySelector('[data-bpm="60"]'), 'de 60 a 200 pulsos');
+  const ayuda = $('im-ayuda'); assert.ok(ayuda && ayuda.open && /Cómo se usa/.test(ayuda.querySelector('summary').textContent) && ayuda.querySelectorAll('ol li').length === 5, 'la ayuda de uso está abierta y tiene 5 pasos');
   assert.equal($('im-parar').disabled, true, 'parar está apagado hasta que suena');
   pr.querySelector('[data-tono="G"]').click();
   await esperar(() => $('im-acorde').textContent === 'Am7', 'ii–V–I en G empieza en Am7');
@@ -1258,3 +1259,24 @@ test('EDITOR · botón para entrar desde la página y botón Salir dentro del ed
   sinErrores(ed); ed.cerrar();
 });
 
+test('PRACTICAR · Escalas y modos: al revelar, un mini piano marca las teclas de la escala (la tónica en verde)', async () => {
+  memoria.clear();
+  const n = await navegador('');
+  const { $ } = n;
+  const pr = await abrirPractica(n);
+  pr.querySelector('#pr-escalas-ir').click();
+  await esperar(() => $('es-empezar-5') && !$('es-empezar-5').disabled, 'teoría cargada');
+  $('es-empezar-5').click();
+  await esperar(() => $('es-toque'), 'primer reto');
+  assert.equal($('es-piano'), null, 'el piano no se ve antes de tocar: no regala la respuesta');
+  $('es-toque').click();
+  await esperar(() => $('es-piano'), 'piano de la escala');
+  const notas = $('es-notas').textContent.split(' ');
+  const teclas = n.d.querySelectorAll('#es-piano .pk-on');
+  assert.equal(teclas.length, notas.length, 'una tecla marcada por nota, con la tónica repetida una octava arriba');
+  const midis = [...teclas].map(t => Number(t.getAttribute('data-midi')));
+  assert.deepEqual([...midis].sort((x, y) => x - y), midis.sort((x, y) => x - y)); assert.equal(midis[midis.length - 1] - midis[0], 12);
+  assert.equal(n.d.querySelectorAll('#es-piano .pk-ok').length, 2, 'la tónica de abajo y la de arriba van en verde');
+  assert.match($('es-piano-texto').textContent, /no oye tu piano/);
+  sinErrores(n); n.cerrar();
+});

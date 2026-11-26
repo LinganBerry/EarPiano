@@ -33,6 +33,15 @@
     return intervalos.map(i => { const v = T.Interval.get(i); const dif = v.semitones - MAYOR[(v.num - 1) % 7]; return { texto: marca(dif) + v.num, cambia: dif !== 0 }; });
   }
 
+  // Teclas de la escala subiendo una octava desde la tónica, entre Do4 (60) y Si5 (83): justo lo que dibuja el mini piano.
+  // `notas` ya trae la tónica repetida al final. Cada nota queda siempre por encima de la anterior.
+  function midis(T, notas) {
+    const pcs = notas.map(n => T.Note.get(n).chroma);
+    const out = [60 + pcs[0]];
+    for (let i = 1; i < pcs.length; i++) out.push(out[i - 1] + ((((pcs[i] - pcs[i - 1]) % 12) + 12) % 12 || 12));
+    return out;
+  }
+
   // Elige el siguiente reto (4 de cada 10 de lo fallado si lo activaste), sin repetir el anterior.
   function crearReto({ T, modos }, op = {}, azar = Math.random, previo = null, est = null) {
     const base = lista(modos, op.tipo);
@@ -91,7 +100,7 @@
     return { v, a, repasar };
   }
 
-  const api = { TONICAS, OTRAS, lista, armar, grados, crearReto, vacias, limpiar, podar, registrar, resumen, CFG: { guardia: 350 } };
+  const api = { TONICAS, OTRAS, lista, armar, grados, midis, crearReto, vacias, limpiar, podar, registrar, resumen, CFG: { guardia: 350 } };
   raiz.Escalas = api;
   if (typeof document === 'undefined') return;
 
@@ -102,6 +111,8 @@
     n.append(...kids.flat().filter(k => k != null && k !== false));
     return n;
   };
+  const N = raiz.Notacion;
+  const nodoSvg = texto => document.importNode(new DOMParser().parseFromString(texto, 'image/svg+xml').documentElement, true);
   const PREF = 'repertorio-esc-pref', EST = 'repertorio-esc-v1';
   const { leer, guardar } = window.RepertorioLocal;
   const seg = ms => (ms / 1000).toFixed(1) + ' s';
@@ -163,6 +174,8 @@
     const revelado = f === 'pregunta' ? null : el('div', { className: 'parte', id: 'es-revela', 'aria-live': 'polite' },
       el('h3', {}, 'Las notas'), el('p', { className: 'rt-prog', id: 'es-notas' }, r.notas.join(' ')),
       el('p', { className: 'a', id: 'es-grados' }, 'Grados: ' + r.grados),
+      (() => { const m = midis(datos.T, r.notas); return el('div', { className: 'pr-visual', id: 'es-piano' }, nodoSvg(N.svgTeclado({ marcar: m, clases: { [m[0]]: 'pk-ok', [m[m.length - 1]]: 'pk-ok' } }))); })(),
+      el('p', { className: 'a', id: 'es-piano-texto' }, 'Teclas de la escala (en verde, la tónica). Compáralas con las que tocaste: la app no oye tu piano.'),
       r.cambia ? el('p', { className: 'a', id: 'es-cambia' }, r.cambia.length ? 'Cambia respecto a la mayor: ' + r.cambia.join(' ') : 'Es la escala mayor.') : null);
     const botones = f === 'pregunta' ? [boton('Ya la toqué', 'es-toque', () => revelar('toque'), true), boton('No me sale (ver)', 'es-ver', () => revelar('visto'))]
       : f === 'toque' ? [el('p', { className: 'a', id: 'es-tiempo' }, 'Tardaste ' + seg(ses.ms) + '. ¿La tocaste bien?'), boton('Sí, bien', 'es-bien', () => responder(true), true), boton('Fallé', 'es-fallo', () => responder(false))]

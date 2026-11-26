@@ -111,3 +111,17 @@ test('los modos Dórico, Frigio, Lidio y Locrio ya no existen en ningún archivo
     assert.equal(hallado, null, f + ' todavía menciona: ' + (hallado && hallado[0]));
   }
 });
+
+test('midis: la escala sube desde la tónica una octava y cabe siempre entre Do4 y Si5 (el mini piano)', () => {
+  const notas = id => [...T.Scale.get(id).notes, T.Scale.get(id).notes[0]];
+  assert.deepEqual(J(E.midis(T, notas('C major'))), [60, 62, 64, 65, 67, 69, 71, 72]);
+  assert.deepEqual(J(E.midis(T, notas('D dorian'))), [62, 64, 65, 67, 69, 71, 72, 74]);
+  assert.deepEqual(J(E.midis(T, notas('C minor pentatonic'))), [60, 63, 65, 67, 70, 72]);
+  for (let pc = 0; pc < 12; pc++) for (const id of IDS) {
+    const e = E.armar(T, pc, id); if (!e) continue;
+    const m = E.midis(T, [...e.notas, e.notas[0]]);
+    assert.equal(m.length, e.notas.length + 1); assert.equal(m[m.length - 1] - m[0], 12, `${e.tonica} ${id}: termina una octava arriba`);
+    assert.ok(m.every((x, i) => i === 0 || x > m[i - 1]), `${e.tonica} ${id}: siempre sube`);
+    assert.ok(m[0] >= 60 && m[m.length - 1] <= 83, `${e.tonica} ${id}: cabe en el piano de 2 octavas (${m[0]}–${m[m.length - 1]})`);
+  }
+});
