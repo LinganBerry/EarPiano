@@ -382,12 +382,6 @@ body.presentando { overflow: hidden; }
   /* Letras / Romanos / Números solo cambian los chips de la pestaña Acordes: en Letra no se muestran */
   .v-letra .n-sel { display: none; }
   .cq-c3 { fill: var(--muted); text-anchor: middle; font: 600 11px var(--sans); }
-  /* Improvisación: lo que suena ahora queda fijo arriba; los controles se desplazan debajo */
-  .im-panel { position: sticky; z-index: 2; padding: .4rem 1rem .6rem; text-align: center; background: var(--bg); border-bottom: 1px solid var(--line); }
-  .im-panel .rt-acorde { margin: 0; font-size: 2.6rem; line-height: 1.1; }
-  .im-panel .rt-pos, .im-panel .pr-pedido { margin: .1rem 0; }
-  .im-botones { display: flex; gap: .5rem; margin-top: .4rem; }
-  .im-botones button { flex: 1; }
 
 
 /* =====================================================================================

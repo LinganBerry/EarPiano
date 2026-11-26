@@ -48,7 +48,7 @@ export async function navegador(busqueda = '', red = {}) {
   const errores = [], vc = new VirtualConsole();
   vc.on('jsdomError', e => { if (!/Not implemented/.test(e.message)) errores.push(e.stack || e.message); });
   const dom = new JSDOM(html, {
-    url: 'http://prueba.local/' + (red.local || /servidor/.test(busqueda) ? busqueda : busqueda.replace(/^([^#]*)/, (q, a) => a + (a ? '&' : '?') + 'servidor')), runScripts: 'dangerously', resources: { interceptors: [interceptor] }, pretendToBeVisual: true, virtualConsole: vc,
+    url: 'http://prueba.local/' + busqueda, runScripts: 'dangerously', resources: { interceptors: [interceptor] }, pretendToBeVisual: true, virtualConsole: vc,
     beforeParse(w) {
       w.addEventListener('error', e => { if (!e.defaultPrevented) errores.push('error no capturado: ' + (e.error && e.error.stack || e.message)); });
       w.addEventListener('unhandledrejection', e => errores.push('promesa rechazada: ' + e.reason));

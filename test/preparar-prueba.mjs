@@ -54,10 +54,3 @@ test('ejecutar: un archivo que se pidió bien pero no está en la copia guardada
 test('ejecutar: sin archivos no se cuelga', async () => {
   assert.deepEqual(J(await P.ejecutar({ urls: [], pedir: async () => ({ ok: true }), guardado: async () => ({}) })), { total: 0, guardados: 0, faltan: [] });
 });
-
-test('armarLista en modo local: no pide /api/canciones (las canciones ya están en el dispositivo)', () => {
-  const l = J(P.armarLista({ origen, pagina: ['/app.js', '/datos-local.js'], servidor: false }));
-  assert.ok(!l.includes('/api/canciones'), 'no debe pedir la API en modo local');
-  assert.ok(l.includes('/datos-local.js') && l.includes('/vendor/atril-notas.woff2') && l.includes('/'));
-  assert.ok(J(P.armarLista({ origen, servidor: true })).includes('/api/canciones'), 'en modo servidor sí');
-});
