@@ -43,7 +43,7 @@ const revisar = () => {
 const PASOS = [
   ['inicio', async p => {}],
   ['cancion', async p => { await p.click('#lista .fila button'); await p.waitForSelector('#cancion:not([hidden])'); }],
-  ['practicar', async p => { await p.keyboard.press('Escape'); await p.waitForTimeout(300); await p.click('#practica-btn'); await p.waitForSelector('#pr-retos-ir', { state: 'attached' }); }],
+  ['practicar', async p => { await p.keyboard.press('Escape'); await p.waitForTimeout(300); await p.click('#practica-btn'); await p.waitForSelector('#pr-reconocer-ir', { state: 'attached' }); }],
   ['reconocer', async p => { await p.goto(URL_BASE); await p.waitForSelector('#lista .fila'); await p.click('#practica-btn'); await p.waitForSelector('#pr-reconocer-ir', { state: 'attached' }); await p.evaluate(() => document.getElementById('pr-reconocer-ir').click()); await p.waitForSelector('#rc-empezar-10'); await p.click('#rc-empezar-10'); await p.waitForTimeout(400); }],
   ['estadisticas', async p => { await p.goto(URL_BASE); await p.waitForSelector('#lista .fila'); await p.click('#practica-btn'); await p.waitForSelector('#pr-stats-ir', { state: 'attached' }); await p.evaluate(() => document.getElementById('pr-stats-ir').click()); await p.waitForSelector('#pr-stats'); }],
   ['teoria-quintas', async p => { await p.goto(URL_BASE); await p.waitForSelector('#lista .fila'); await p.click('#teoria-btn'); await p.click('#teoria button:has-text("Círculo")'); await p.waitForSelector('svg.cq'); }]

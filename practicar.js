@@ -173,7 +173,6 @@
       el('div', { className: 'pr-fila-txt' }, el('b', {}, titulo), el('span', { className: 'a' }, linea)),
       el('button', { type: 'button', className: 'primario', id: idBtn, onclick: fn }, textoBtn));
     const filasRetos = [
-      window.Retos && window.Retos.abrir ? fila('pr-retos', 'Acordes', 'Mayores y menores, en los 12 tonos.', 'Abrir', 'pr-retos-ir', pintarRetos) : null,
       window.Reconocer && window.Reconocer.abrir ? fila('pr-reconocer', 'Reconocer acordes', 'Ves el acorde en el piano (con inversiones) y dices cuál es.', 'Abrir', 'pr-reconocer-ir', pintarReconocer) : null,
       window.Progresiones && window.Progresiones.abrir ? fila('pr-progs', 'Progresiones', 'De tus canciones, en números romanos.', 'Abrir', 'pr-progs-ir', pintarProgresiones) : null,
       window.Escalas && window.Escalas.abrir ? fila('pr-escalas', 'Escalas y modos', 'Una escala o un modo en una tónica al azar.', 'Abrir', 'pr-escalas-ir', pintarEscalas) : null
@@ -181,7 +180,6 @@
     const prep = window.Preparar && window.Preparar.tarjeta ? window.Preparar.tarjeta() : null;
     const filasHerr = [
       window.Rearmonizar && window.Rearmonizar.abrir ? fila('pr-rearm', 'Rearmonizar', 'Ideas para adornar tus canciones, por niveles.', 'Abrir', 'pr-rearm-ir', pintarRearmonizar) : null,
-      window.Improvisar && window.Improvisar.abrir ? fila('pr-improv', 'Improvisación', 'Una base que suena en bucle y las notas guía de cada acorde.', 'Abrir', 'pr-improv-ir', pintarImprovisar) : null,
       window.RepertorioTimer ? fila('pr-timer', 'TimerPiano', textoTimer(), 'Abrir', 'pr-timer-ir', () => window.RepertorioTimer.abrir()) : null,
       prep
     ].filter(Boolean);
@@ -202,22 +200,10 @@
   }
 
   // --- estadísticas ---
-  function pintarRetos() {
-    dejarInicio();
-    clearTimeout(temporizador); ses = null; mod = 0; pantalla = 'retos'; modRetos = window.Retos;
-    window.RepertorioAudio?.detener();
-    window.Retos.abrir(caja, pintarInicio);
-  }
   function pintarRearmonizar() {
     dejarInicio();
     clearTimeout(temporizador); ses = null; mod = 0; pantalla = 'retos'; modRetos = window.Rearmonizar;
     window.Rearmonizar.abrir(caja, pintarInicio);
-  }
-  function pintarImprovisar() {
-    dejarInicio();
-    clearTimeout(temporizador); ses = null; mod = 0; pantalla = 'retos'; modRetos = window.Improvisar;
-    window.RepertorioAudio?.detener();
-    window.Improvisar.abrir(caja, pintarInicio);
   }
   function pintarEscalas() {
     dejarInicio();

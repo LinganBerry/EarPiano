@@ -565,84 +565,7 @@ test('PRACTICAR: Atrás desde una sesión, una lección o las estadísticas vuel
   sinErrores(n); n.cerrar();
 });
 
-test('RETOS DE ACORDES: elegir opciones, hacer un reto completo, estadísticas guardadas y Atrás por niveles', async () => {
-  memoria.clear();
-  const n = await navegador('');
-  const caja = await abrirPractica(n);
-  n.w.Retos.CFG.guardia = 0;                                   // sin espera anti doble toque en las pruebas
-  n.$('pr-retos-ir').click();
-  await esperar(() => n.$('rt-empezar-10'), 'menú de los retos');
-  assert.equal(caja.scrollTop, 0);
-  assert.equal(n.$('rt-progreso').textContent.includes('Aún no has hecho retos'), true);
-  n.d.querySelector('[data-op="calidad:m"]').click();
-  n.d.querySelector('[data-op="inversiones:true"]').click();
-  assert.equal(n.d.querySelector('[data-op="calidad:m"]').getAttribute('aria-pressed'), 'true');
-  assert.deepEqual(JSON.parse(n.w.localStorage.getItem('repertorio-retos-pref')), { calidad: 'm', inversiones: true, tiempo: 0, teclado: true, repasar: true });
 
-  n.$('rt-empezar-10').click();
-  await esperar(() => n.$('rt-acorde'), 'primer reto');
-  const bien = [], hechos = [];
-  for (let i = 1; i <= 10; i++) {
-    const nombre = n.$('rt-acorde').textContent;
-    assert.match(nombre, /^[A-G](#|b)?m$/, 'solo menores: ' + nombre);
-    assert.match(n.d.querySelector('.cbarra').textContent, new RegExp(`${i} / 10`));
-    assert.equal(n.$('rt-revela'), null, 'las notas no se ven antes de tocar');
-    if (i % 3 === 0) { n.$('rt-ver').click(); assert.ok(n.$('rt-revela')); n.$('rt-sig').click(); hechos.push([nombre, false]); }
-    else {
-      n.$('rt-toque').click();
-      assert.ok(n.$('rt-revela').querySelector('svg.pteclado'), 'se dibuja el teclado');
-      assert.equal(n.$('rt-revela').querySelectorAll('.pk-on').length, 3, 'tres teclas marcadas');
-      assert.match(n.$('rt-tiempo').textContent, /Tardaste \d+\.\d s/);
-      if (i % 4 === 0) { n.$('rt-fallo').click(); hechos.push([nombre, false]); } else { n.$('rt-bien').click(); hechos.push([nombre, true]); }
-    }
-  }
-  await esperar(() => n.$('rt-resultado'), 'resultado');
-  const buenas = hechos.filter(h => h[1]).length;
-  assert.match(n.$('rt-resultado').textContent, new RegExp(`^${buenas} de 10 bien`));
-  const est = JSON.parse(n.w.localStorage.getItem('repertorio-retos-v1'));
-  assert.equal(Object.values(est.items).reduce((s, x) => s + x.v, 0), 10, 'cada reto quedó guardado');
-  assert.equal(Object.values(est.items).reduce((s, x) => s + x.a, 0), buenas);
-
-  n.w.history.back();                                          // Atrás desde el resultado: menú de los retos
-  await esperar(() => n.$('rt-empezar-10') && n.$('rt-progreso').textContent.includes('10 retos'), 'vuelve al menú de los retos, con el progreso');
-  assert.equal(n.$('practica').hidden, false);
-  n.$('rt-empezar-10').click();
-  await esperar(() => n.$('rt-acorde'), 'otra sesión');
-  n.w.history.back();                                          // Atrás en medio de un reto: menú de los retos
-  await esperar(() => n.$('rt-empezar-10'), 'menú de los retos otra vez');
-  n.w.history.back();                                          // Atrás desde el menú de los retos: menú de Practicar
-  await esperar(() => n.$('pr-diaria') && n.$('pr-retos-ir'), 'menú de Practicar');
-  assert.equal(n.$('practica').hidden, false);
-  n.w.history.back();                                          // y desde ahí, sale de Practicar
-  await esperar(() => n.$('practica').hidden, 'sale de Practicar');
-  assert.equal(n.$('app').inert, false);
-  sinErrores(n); n.cerrar();
-});
-
-test('RETOS DE ACORDES: tiempo por acorde (al acabarse cuenta como fallo y muestra la respuesta), solo notas y sin relojes sueltos al salir', async () => {
-  memoria.clear();
-  const n = await navegador('');
-  await abrirPractica(n);
-  n.w.Retos.CFG.guardia = 0; n.w.Retos.CFG.escala = 0.02;      // 6 s -> 120 ms en la prueba
-  n.$('pr-retos-ir').click(); await esperar(() => n.$('rt-empezar-10'), 'menú de los retos');
-  n.d.querySelector('[data-op="tiempo:6"]').click(); n.d.querySelector('[data-op="teclado:false"]').click();
-  assert.equal(n.d.querySelector('[data-op="tiempo:6"]').getAttribute('aria-pressed'), 'true');
-  n.$('rt-empezar-10').click(); await esperar(() => n.$('rt-acorde'), 'primer reto');
-  assert.ok(n.$('rt-barra') && /Quedan \d+ s/.test(n.$('rt-cuenta').textContent), 'se ve la cuenta regresiva');
-  await esperar(() => n.$('rt-expiro'), 'se acaba el tiempo');
-  assert.ok(n.$('rt-sig'), 'solo queda Siguiente'); assert.equal(n.$('rt-revela').querySelector('svg'), null, 'solo notas, sin teclado');
-  assert.match(n.$('rt-revela').textContent, /\w/);
-  n.$('rt-sig').click(); await esperar(() => n.$('rt-toque'), 'segundo reto');
-  n.$('rt-toque').click(); assert.equal(n.$('rt-barra'), null, 'al tocar se detiene la cuenta'); n.$('rt-bien').click();
-  await esperar(() => n.$('rt-toque'), 'tercer reto');
-  const est = JSON.parse(n.w.localStorage.getItem('repertorio-retos-v1'));
-  assert.deepEqual([Object.values(est.items).reduce((s, x) => s + x.v, 0), Object.values(est.items).reduce((s, x) => s + x.a, 0)], [2, 1], 'el tiempo agotado cuenta como fallo');
-  n.w.history.back();                                           // salir con la cuenta corriendo
-  await esperar(() => n.$('rt-empezar-10'), 'menú de los retos');
-  await new Promise(r => setTimeout(r, 400));                   // si quedara un reloj vivo, rompería el menú
-  assert.ok(n.$('rt-empezar-10') && !n.$('rt-expiro') && !n.$('rt-barra'));
-  sinErrores(n); n.cerrar();
-});
 
 // Estas pruebas reemplazan los datos del almacén falso: van al final para no alterar a las demás.
 const sembrar = lista => memoria.set('repertorio/canciones.json', { texto: JSON.stringify({ version: 2, nombre: 'EarPiano', intro: '', canciones: lista.map(([t, tono, ...partes], i) => ({ id: 'id' + i + 'x' + t.length, titulo: t, artista: 'Artista ' + i, tono, partes: partes.map(([nombre, prog]) => ({ nombre, tono: '', prog, letra: '', pista: '' })) })) }), etag: '"e0"' });
@@ -946,7 +869,7 @@ test('PRACTICAR · menú ordenado: Hoy, Retos y Herramientas arriba; los temas s
   const grupos = [...n.d.querySelectorAll('#practica h2.pr-grupo')].map(h => h.textContent);
   assert.deepEqual(grupos.slice(0, 3), ['Hoy', 'Retos', 'Herramientas']);
   assert.ok(n.$('pr-g-herr').contains(n.$('pr-timer')), 'TimerPiano está en Herramientas'); assert.equal(n.$('pr-g-retos').contains(n.$('pr-timer')), false);
-  for (const id of ['pr-retos', 'pr-reconocer', 'pr-escalas']) assert.ok(n.$('pr-g-retos').contains(n.$(id)), id + ' en Retos');
+  for (const id of ['pr-reconocer', 'pr-escalas']) assert.ok(n.$('pr-g-retos').contains(n.$(id)), id + ' en Retos');
   const temas = n.$('pr-g-temas');
   assert.equal(temas.tagName, 'DETAILS'); assert.equal(temas.open, false, 'plegado al entrar'); assert.equal(temas.querySelector('summary').textContent, 'Ejercicios por tema');
   assert.ok(temas.querySelector('[data-tema="sol"]') && temas.querySelector('[data-tema="int-asc"]'), 'los temas siguen ahí dentro');
@@ -1158,66 +1081,6 @@ test('PRACTICAR · Rearmonizar: nivel 5 (ciclo de dominantes y bajo caminando) y
   sinErrores(n); n.cerrar();
 });
 
-test('PRACTICAR · Improvisación: base en bucle con notas guía, cambia de acorde, reprograma el bucle y se apaga al salir', async () => {
-  memoria.clear();
-  const n = await navegador('');
-  const { d, $, w } = n;
-  const pr = await abrirPractica(n);
-  const llamadas = []; let paradas = 0;
-  w.RepertorioAudio = { tocar: async p => { llamadas.push(JSON.parse(JSON.stringify(p))); }, detener: () => { paradas++; } };
-  pr.querySelector('#pr-improv-ir').click();
-  await esperar(() => $('im-tocar') && !$('im-tocar').disabled, 'teoría cargada');
-  assert.equal(pr.querySelectorAll('[data-tono]').length, 12); assert.equal(pr.querySelectorAll('[data-base]').length, 5); assert.equal(pr.querySelectorAll('[data-bpm]').length, 8); assert.ok(pr.querySelector('[data-bpm="200"]') && pr.querySelector('[data-bpm="60"]'), 'de 60 a 200 pulsos');
-  const ayuda = $('im-ayuda'); assert.ok(ayuda && ayuda.open && /Cómo se usa/.test(ayuda.querySelector('summary').textContent) && ayuda.querySelectorAll('ol li').length === 5, 'la ayuda de uso está abierta y tiene 5 pasos');
-  assert.equal($('im-parar').disabled, true, 'parar está apagado hasta que suena');
-  pr.querySelector('[data-tono="G"]').click();
-  await esperar(() => $('im-acorde').textContent === 'Am7', 'ii–V–I en G empieza en Am7');
-  assert.equal(pr.querySelector('[data-tono="G"]').getAttribute('aria-pressed'), 'true');
-  assert.equal(llamadas.length, 0, 'no suena hasta tocar');
-  $('im-tocar').click();
-  await esperar(() => llamadas.length === 1, 'programa el bloque');
-  assert.equal(llamadas[0].length, 32, '8 vueltas de 4 acordes');
-  assert.deepEqual(llamadas[0][0].midis, [45, 57, 60, 64, 67], 'A2 de bajo y Am7');
-  assert.equal(llamadas[0][1].en, 3000, '80 pulsos: un compás cada 3 s');
-  assert.equal($('im-guia').textContent.replace(/\s+/g, ' '), '3ª: C · 7ª: G');
-  assert.match($('im-sig').textContent, /Siguiente: D7\. La 7ª \(G\) baja medio tono hasta la 3ª \(F♯\)\./);
-  assert.match($('im-escala').textContent, /Escala: G mayor desde A — A B C D E F♯ G/);
-  assert.equal($('im-parar').disabled, false); assert.equal($('im-tocar').textContent, '↻ Reiniciar');
-  const fila = () => [...d.querySelectorAll('#im-fila .chip')].map(c => c.classList.contains('oye'));
-  assert.deepEqual(fila(), [true, false, false, false]);
-  w.Improvisar.avanzar();
-  assert.equal($('im-acorde').textContent, 'D7'); assert.deepEqual(fila(), [false, true, false, false]);
-  assert.match($('im-escala').textContent, /Escala: D Mixolidio/);
-  w.Improvisar.avanzar(); assert.equal($('im-acorde').textContent, 'Gmaj7');
-  w.Improvisar.avanzar(); w.Improvisar.avanzar(); assert.equal($('im-acorde').textContent, 'Am7', 'vuelve al principio');
-  for (let i = 0; i < 27; i++) w.Improvisar.avanzar();   // 31 compases: todavía dentro del bloque
-  assert.equal(llamadas.length, 1);
-  w.Improvisar.avanzar();                                 // el 32: se acabó lo programado → reprograma sin que se note
-  await esperar(() => llamadas.length === 2, 'segunda tanda');
-  assert.equal($('im-acorde').textContent, 'Am7');
-  // Cambiar de tono mientras suena reinicia con el nuevo tono; cambiar de base cambia la fila de acordes
-  pr.querySelector('[data-tono="Eb"]').click();
-  await esperar(() => llamadas.length === 3, 'reinicia en E♭');
-  assert.equal($('im-acorde').textContent, 'Fm7'); assert.equal(pr.querySelector('[data-tono="Eb"]').getAttribute('aria-pressed'), 'true');
-  pr.querySelector('[data-base="blues"]').click();
-  await esperar(() => llamadas.length === 4, 'reinicia con el blues');
-  assert.equal(d.querySelectorAll('#im-fila .chip').length, 12); assert.equal($('im-acorde').textContent, 'E♭7'); assert.equal(llamadas[3].length, 36, '3 vueltas de 12');
-  assert.match($('im-base-texto').textContent, /dominantes/);
-  const antes = paradas;
-  $('im-parar').click();
-  assert.ok(paradas > antes, 'parar apaga el sonido'); assert.equal($('im-parar').disabled, true);
-  // Volver a Practicar con la base sonando: se apaga todo
-  $('im-tocar').click();
-  await esperar(() => llamadas.length === 5, 'suena otra vez');
-  const antes2 = paradas;
-  pr.querySelector('.cbarra button').click();
-  await esperar(() => pr.querySelector('#pr-improv-ir'), 'menú de Practicar');
-  assert.ok(paradas > antes2, 'al salir se detiene el sonido');
-  await new Promise(r => setTimeout(r, 50));
-  w.Improvisar.avanzar();                                 // un reloj que quedara vivo no debe reprogramar nada
-  assert.equal(llamadas.length, 5);
-  sinErrores(n); n.cerrar();
-});
 
 test('PRACTICAR (oído): progresiones de acordes con números romanos, cuatro acordes por pregunta y aviso con el tono', async () => {
   memoria.clear();
