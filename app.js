@@ -2,7 +2,10 @@
   'use strict';
 
   const PARAMS = new URLSearchParams(location.search);
-  const SERVIDOR = PARAMS.has('servidor');   // ?servidor = tus datos en el servidor (pide tu contraseña); sin eso, todo queda en este dispositivo
+  // ?servidor activa tu modo servidor y el dispositivo se acuerda; ?local lo apaga. Sin nada de eso, todo queda en este dispositivo.
+  const MARCA = 'earpiano-servidor';
+  try { if (PARAMS.has('servidor')) localStorage.setItem(MARCA, '1'); else if (PARAMS.has('local')) localStorage.removeItem(MARCA); } catch (e) { /* sin almacenamiento */ }
+  const SERVIDOR = PARAMS.has('servidor') || (!PARAMS.has('local') && (() => { try { return localStorage.getItem(MARCA) === '1'; } catch (e) { return false; } })());
   const EDITOR = PARAMS.has('editar');   // ?editar = modo editor (con ?servidor además usa tu servidor y pide tu contraseña)
   if (EDITOR) { const e = document.getElementById('enlace-editor'); if (e) e.hidden = true; }   // ya estás en el editor: ahí el botón es "Salir"
   const NOTAS = { C: 0, 'C#': 1, Db: 1, D: 2, 'D#': 3, Eb: 3, E: 4, F: 5, 'F#': 6, Gb: 6, G: 7, 'G#': 8, Ab: 8, A: 9, 'A#': 10, Bb: 10, B: 11 };

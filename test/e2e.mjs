@@ -1295,3 +1295,13 @@ test('MODO LOCAL: el editor abre sin contraseña y guarda en el dispositivo, sin
   assert.equal(memoria.size, 0, 'el servidor no recibió nada');
   sinErrores(n);
 });
+
+test('MODO SERVIDOR: ?servidor se recuerda en el dispositivo y ?local lo apaga', async () => {
+  memoria.clear();
+  const n = await navegador('?servidor', { local: true });
+  assert.equal(n.w.RepertorioApp.servidor, true);
+  assert.equal(n.w.localStorage.getItem('earpiano-servidor'), '1');
+  const m = await navegador('?local', { local: true });
+  assert.equal(m.w.RepertorioApp.servidor, false);
+  assert.equal(m.w.localStorage.getItem('earpiano-servidor'), null);
+});
