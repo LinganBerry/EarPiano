@@ -150,7 +150,8 @@
   const ZMIN = .5;   // tamaño mínimo de letra (antes .85, quedaba grande en algunos teléfonos)
   let zoom = Math.min(1.9, Math.max(ZMIN, Number(leer('repertorio-zoom', 1)) || 1));
   let actual = null, ultima = null, orden = [];
-  let transp = 0, transpDe = null, cTr = null;   // transposición: solo cambia lo que se ve, nunca lo guardado
+  let transp = 0, transpDe = null, cTr = null;
+  const metro = window.Metronomo ? window.Metronomo.crear() : null;   // metrónomo: suena aunque cambies de canción; se para al cerrarla   // transposición: solo cambia lo que se ve, nunca lo guardado
 
   // Pantalla encendida mientras la canción está abierta (si el navegador lo permite).
   let candado = null;
@@ -348,6 +349,12 @@
     if (transpDe !== actual) { transpDe = actual; transp = 0; }   // otra canción: vuelve al tono original
     const orig = actual, c = window.Transponer ? window.Transponer.cancion(orig, transp) : orig, caja = $('cancion');
     cTr = c;
+    const pintarMetro = () => {
+      const b = $('metro-ini'); if (b) { b.textContent = metro.sonando() ? '■ Parar' : '▶ Metrónomo'; b.setAttribute('aria-pressed', String(metro.sonando())); }
+      const t = $('metro-bpm'); if (t) t.textContent = metro.bpm() + ' BPM';
+    };
+    const alternarMetro = () => { metro.alternar(); pintarMetro(); };
+    const cambiarBpm = d => { metro.fijar(metro.bpm() + d); pintarMetro(); };
     const cambiarTr = d => { transp = ((transp + d) % 12 + 12) % 12; if (transp > 6) transp -= 12; mostrar(); };
     const hoja = c.letra && window.Hoja ? window.Hoja.interpretar(c.letra) : [];
     const conHoja = hoja.length > 0, verLetra = conHoja && vistaLetra;
@@ -380,6 +387,11 @@
           el('span', { className: 'transp-txt' }, transp ? 'Transpuesta ' + (transp > 0 ? '+' : '') + transp : 'Transponer'),
           el('button', { type: 'button', id: 'tr-mas', 'aria-label': 'Subir medio tono', onclick: () => cambiarTr(1) }, '+'),
           transp !== 0 && el('button', { type: 'button', id: 'tr-original', onclick: () => { transp = 0; mostrar(); } }, 'Tono original')),
+        metro && window.Metronomo.hayAudio() && el('p', { className: 'noimp transp' },
+          el('button', { type: 'button', id: 'metro-ini', 'aria-pressed': String(metro.sonando()), onclick: alternarMetro }, metro.sonando() ? '■ Parar' : '▶ Metrónomo'),
+          el('button', { type: 'button', id: 'metro-menos', 'aria-label': 'Bajar 5 pulsaciones por minuto', onclick: () => cambiarBpm(-5) }, '−'),
+          el('span', { id: 'metro-bpm', className: 'transp-txt' }, metro.bpm() + ' BPM'),
+          el('button', { type: 'button', id: 'metro-mas', 'aria-label': 'Subir 5 pulsaciones por minuto', onclick: () => cambiarBpm(5) }, '+')),
         enlace && el('p', { className: 'noimp' }, el('a', { href: enlace, target: '_blank', rel: 'noopener noreferrer' }, 'Escuchar referencia ↗')),
         conHoja && el('div', { className: 'pastillas vistas noimp', rol: 'group', 'aria-label': 'Vista de la canción' },
           el('button', { type: 'button', 'data-v': 'acordes', 'aria-pressed': String(!verLetra), onclick: () => cambiarVista(false) }, 'Acordes'),
@@ -443,6 +455,7 @@
   function cerrarCancion() {
     cerrarPresentar();
     actual = null; desde = [];
+    if (metro) metro.parar();
     $('cancion').hidden = true;
     document.body.classList.remove('fija');
     soltarPantalla();

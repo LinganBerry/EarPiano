@@ -1172,3 +1172,36 @@ test('TRANSPONER: un clic sube medio tono lo que se ve, sin tocar lo guardado, y
   assert.equal(acordes(), 'C G Am F', 'otra canción: sin transposición');
   sinErrores(n);
 });
+
+test('METRÓNOMO: se ve solo si hay audio, suena, sube el tempo de 5 en 5 y se para', async () => {
+  sembrar([['Aleluya', 'G', ['Verso', 'G D Em C']]]);
+  const sin = await navegador();
+  await esperar(() => sin.d.querySelectorAll('#lista .fila').length === 1, 'la canción');
+  sin.d.querySelector('#lista .fila .abrir').click();
+  await esperar(() => !sin.$('cancion').hidden, 'abrir');
+  assert.equal(sin.d.getElementById('metro-ini'), null, 'sin audio en el navegador, no se muestra');
+
+  const n = await navegador();
+  const { d, $, w } = n;
+  const clics = [];
+  w.AudioContext = function () {
+    return { currentTime: 0, destination: {}, resume() {},
+      createGain: () => ({ gain: { setValueAtTime() {}, exponentialRampToValueAtTime() {} }, connect() {} }),
+      createOscillator: () => ({ frequency: { value: 0 }, connect() {}, start() { clics.push(1); }, stop() {} }) };
+  };
+  await esperar(() => d.querySelectorAll('#lista .fila').length === 1, 'la canción');
+  d.querySelector('#lista .fila .abrir').click();
+  await esperar(() => !$('cancion').hidden, 'abrir');
+  assert.equal($('metro-bpm').textContent, '100 BPM');
+  $('metro-mas').click(); $('metro-mas').click();
+  assert.equal($('metro-bpm').textContent, '110 BPM');
+  $('metro-ini').click();
+  assert.equal($('metro-ini').textContent, '■ Parar'); assert.equal($('metro-ini').getAttribute('aria-pressed'), 'true');
+  assert.ok(clics.length >= 1, 'programó el primer clic');
+  $('tr-mas').click();   // cambiar el tono redibuja la pantalla: el metrónomo sigue sonando y el botón lo refleja
+  assert.equal($('metro-ini').textContent, '■ Parar');
+  $('metro-ini').click();
+  assert.equal($('metro-ini').textContent, '▶ Metrónomo');
+  assert.equal(w.localStorage.getItem('repertorio-metronomo-bpm'), '110');
+  sinErrores(n);
+});
