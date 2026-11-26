@@ -150,6 +150,7 @@
   const ZMIN = .5;   // tamaño mínimo de letra (antes .85, quedaba grande en algunos teléfonos)
   let zoom = Math.min(1.9, Math.max(ZMIN, Number(leer('repertorio-zoom', 1)) || 1));
   let actual = null, ultima = null, orden = [];
+  let transp = 0, transpDe = null, cTr = null;   // transposición: solo cambia lo que se ve, nunca lo guardado
 
   // Pantalla encendida mientras la canción está abierta (si el navegador lo permite).
   let candado = null;
@@ -196,7 +197,7 @@
     const gs = compases(p.prog);
     // Cada compás va junto (no se parte entre dos líneas) y la barra | lo cierra.
     const hijos = gs.map((g, i) => el('span', { className: 'compas' },
-      ...g.map(a => el('span', { className: 'chip' }, el('b', {}, a), el('i', { className: 'rom' }, romano(a, p.tono || actual.tono)), el('i', { className: 'nas' }, nashville(a, p.tono || actual.tono)))),
+      ...g.map(a => el('span', { className: 'chip' }, el('b', {}, a), el('i', { className: 'rom' }, romano(a, p.tono || (cTr || actual).tono)), el('i', { className: 'nas' }, nashville(a, p.tono || (cTr || actual).tono)))),
       i < gs.length - 1 && el('span', { className: 'barra' }, '|')));
     const alternar = () => { marcarVisto(); foco = foco === k ? -1 : k; aplicarFoco(); };
     return el('section', { className: 'parte' + (norm(p.nombre).trim() === 'coro' ? ' coro' : ''), tabIndex: 0, rol: 'button', 'aria-pressed': 'false',
@@ -344,7 +345,10 @@
   let obsTitulo = null;
   function mostrar() {
     cerrarPresentar();
-    const c = actual, caja = $('cancion');
+    if (transpDe !== actual) { transpDe = actual; transp = 0; }   // otra canción: vuelve al tono original
+    const orig = actual, c = window.Transponer ? window.Transponer.cancion(orig, transp) : orig, caja = $('cancion');
+    cTr = c;
+    const cambiarTr = d => { transp = ((transp + d) % 12 + 12) % 12; if (transp > 6) transp -= 12; mostrar(); };
     const hoja = c.letra && window.Hoja ? window.Hoja.interpretar(c.letra) : [];
     const conHoja = hoja.length > 0, verLetra = conHoja && vistaLetra;
     const cambiarVista = letra => { vistaLetra = letra; const cu = caja.querySelector('.ccuerpo'); cu.classList.toggle('v-letra', letra); cu.classList.toggle('v-acordes', !letra); caja.querySelectorAll('.vistas button').forEach(b => b.setAttribute('aria-pressed', String((b.dataset.v === 'letra') === letra))); };
@@ -371,6 +375,11 @@
         el('h2', {}, c.titulo),
         el('p', { className: 'a' }, [c.artista, c.nota].filter(Boolean).join(' · ')),
         el('p', { className: 'tonos' }, pastilla(c.tono)),
+        window.Transponer && c.tono && el('p', { className: 'noimp transp' },
+          el('button', { type: 'button', id: 'tr-menos', 'aria-label': 'Bajar medio tono', onclick: () => cambiarTr(-1) }, '−'),
+          el('span', { className: 'transp-txt' }, transp ? 'Transpuesta ' + (transp > 0 ? '+' : '') + transp : 'Transponer'),
+          el('button', { type: 'button', id: 'tr-mas', 'aria-label': 'Subir medio tono', onclick: () => cambiarTr(1) }, '+'),
+          transp !== 0 && el('button', { type: 'button', id: 'tr-original', onclick: () => { transp = 0; mostrar(); } }, 'Tono original')),
         enlace && el('p', { className: 'noimp' }, el('a', { href: enlace, target: '_blank', rel: 'noopener noreferrer' }, 'Escuchar referencia ↗')),
         conHoja && el('div', { className: 'pastillas vistas noimp', rol: 'group', 'aria-label': 'Vista de la canción' },
           el('button', { type: 'button', 'data-v': 'acordes', 'aria-pressed': String(!verLetra), onclick: () => cambiarVista(false) }, 'Acordes'),
@@ -382,7 +391,7 @@
           ...VISTAS_ACORDES.map(([id, texto]) => el('button', { type: 'button', 'data-n': id, 'aria-pressed': String(id === vistaAcordes), onclick: () => cambiarAcordes(id) }, texto))),
         partes.length > 0 && !yaVisto() && el('p', { className: 'a noimp pista-enfoque' }, 'Toca una parte para enfocarla.'),
         ...(partes.length ? partes.map((p, k) => parte(p, k)) : [el('p', { className: 'vacio' }, 'Aún no hay partes ni acordes para esta canción.')]),
-        bloqueRelacionadas(c),
+        bloqueRelacionadas(orig),
         el('p', { className: 'noimp' }, el('button', { type: 'button', onclick: () => print() }, 'Imprimir'))),
       el('div', { className: 'cpie noimp' },
         el('button', { type: 'button', title: 'Anterior (←)', disabled: pos <= 0, onclick: () => irA(-1) }, '‹ Anterior'),

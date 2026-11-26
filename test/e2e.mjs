@@ -1143,3 +1143,32 @@ test('PRACTICAR · Escalas y modos: al revelar, un mini piano marca las teclas d
   assert.match($('es-piano-texto').textContent, /no oye tu piano/);
   sinErrores(n); n.cerrar();
 });
+
+test('TRANSPONER: un clic sube medio tono lo que se ve, sin tocar lo guardado, y se reinicia al cambiar de canción', async () => {
+  sembrar([['Aleluya', 'G', ['Verso', 'G D Em C']], ['Brillas', 'C', ['Coro', 'C G Am F']]]);
+  const n = await navegador();
+  const { d, $ } = n;
+  await esperar(() => d.querySelectorAll('#lista .fila').length === 2, 'las 2 canciones');
+  const caja = $('cancion');
+  const fila = t => [...d.querySelectorAll('#lista .fila .abrir')].find(b => b.querySelector('.t').textContent === t);
+  fila('Aleluya').click();
+  await esperar(() => !caja.hidden, 'abrir Aleluya');
+  const acordes = () => [...caja.querySelectorAll('.parte .chip b')].map(x => x.textContent).join(' ');
+  assert.equal(acordes(), 'G D Em C');
+  $('tr-mas').click(); $('tr-mas').click();
+  assert.equal(acordes(), 'A E F#m D', 'dos clics = un tono arriba');
+  assert.match(caja.querySelector('.tonos').textContent, /A/);
+  assert.match(caja.querySelector('.transp-txt').textContent, /\+2/);
+  assert.equal(JSON.parse(memoria.get('repertorio/canciones.json').texto).canciones[0].partes[0].prog, 'G D Em C', 'lo guardado no cambia');
+  $('tr-original').click();
+  assert.equal(acordes(), 'G D Em C');
+  $('tr-menos').click(); $('tr-menos').click(); $('tr-menos').click();
+  assert.equal(acordes(), 'E B C#m A', 'tres clics abajo');
+  $('tr-mas').click(); $('tr-mas').click(); $('tr-mas').click();
+  assert.equal(acordes(), 'G D Em C', 'vuelve al original');
+  $('tr-mas').click();
+  n.tecla(d.body, 'ArrowRight');
+  await esperar(() => caja.querySelector('h2').textContent === 'Brillas', 'siguiente canción');
+  assert.equal(acordes(), 'C G Am F', 'otra canción: sin transposición');
+  sinErrores(n);
+});
