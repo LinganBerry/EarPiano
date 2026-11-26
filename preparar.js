@@ -7,9 +7,10 @@
   const API = '/api/canciones';
 
   // Rutas locales sin repetir y sin "?algo". `pagina` y `audio` vienen de la propia página (no hay una lista copiada a mano).
-  function armarLista({ origen, pagina = [], audio = [] }) {
+  // Las canciones (/api/canciones) solo se piden en modo servidor: en modo local viven en este dispositivo y no hay nada que bajar.
+  function armarLista({ origen, pagina = [], audio = [], servidor = true }) {
     const vistas = new Set();
-    for (const u of [...pagina, ...audio, FUENTE, API, '/']) {
+    for (const u of [...pagina, ...audio, FUENTE, ...(servidor ? [API] : []), '/']) {
       try { const x = new URL(u, origen + '/'); if (x.origin === origen) vistas.add(x.pathname); } catch (e) { /* url rara: se ignora */ }
     }
     return [...vistas];
@@ -62,7 +63,8 @@
       const pagina = [...document.querySelectorAll('script[src], link[rel~="stylesheet"][href], link[rel="manifest"][href], link[rel="apple-touch-icon"][href]')]
         .map(n => mismo(n.getAttribute('src') || n.getAttribute('href'))).filter(Boolean);
       const audio = raiz.RepertorioAudio && raiz.RepertorioAudio.archivos ? raiz.RepertorioAudio.archivos() : [];
-      const urls = armarLista({ origen: location.origin, pagina, audio });
+      const servidor = !!(raiz.RepertorioApp && raiz.RepertorioApp.servidor);
+      const urls = armarLista({ origen: location.origin, pagina, audio, servidor });
       const r = await ejecutar({
         urls, paralelo: 4,
         pedir: u => fetch(u, { cache: 'no-store' }),

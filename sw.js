@@ -4,7 +4,7 @@
 // La copia de la página (BASE) es UN PAQUETE: se baja completo o no se guarda, y se renueva completo (no archivo por archivo),
 // así sin internet nunca se mezcla HTML de una versión con JS de otra. Cambia CACHE solo si cambia esta estrategia o la lista de archivos.
 // La primera visita debe ser con internet. No toca el editor ni los POST (guardar / entrar).
-const CACHE = 'acordes-v28';
+const CACHE = 'acordes-v29';
 // Tone.js, Tonal y las muestras del piano NO se precargan: se guardan la primera vez que abres Teoría (con internet).
 const BASE = ['/', '/index.html', '/estilos.css', '/app.js', '/hoja.js', '/romanos.js', '/analisis.js', '/local.js', '/datos-local.js', '/canciones.js', '/editor.js', '/teoria.js', '/notacion.js', '/lecciones.js', '/practicar.js', '/retos.js', '/reconocer.js', '/timer.js', '/progresiones.js', '/escalas.js', '/improvisar.js', '/rearmonizar.js', '/preparar.js', '/manifest.webmanifest', '/icono-192.png'];
 const API = '/api/canciones';
