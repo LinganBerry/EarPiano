@@ -1205,3 +1205,20 @@ test('METRÓNOMO: se ve solo si hay audio, suena, sube el tempo de 5 en 5 y se p
   assert.equal(w.localStorage.getItem('repertorio-metronomo-bpm'), '110');
   sinErrores(n);
 });
+
+test('REPASO ESPACIADO: "Para repasar" muestra solo lo fallado que ya toca, no lo de hoy ni lo nunca fallado', async () => {
+  const dia = atras => new Date(Date.now() - atras * 86400000).toLocaleDateString('en-CA');
+  const sesion = (id, f, ...q) => ({ id, t: 'armadura', l: 1, f, n: q.length, a: q.filter(x => x[1]).length, ms: 4000, q: q.map(([i, ok]) => [i, ok ? 1 : 0, 1000]) });
+  const pend = [
+    sesion('aaaaaaaa01', dia(3), ['as:D', 0], ['as:G', 1]),   // D fallada hace 3 días: toca hoy; G nunca fallada
+    sesion('aaaaaaaa02', dia(0), ['as:E', 0])                // E fallada hoy: toca mañana
+  ];
+  const n = await navegador('', { antes: w => w.localStorage.setItem('repertorio-practica-v1', JSON.stringify({ servidor: [], pend, apartadas: [] })) });
+  const caja = await abrirPractica(n);
+  const tarjeta = [...caja.querySelectorAll('.parte')].find(p => p.querySelector('h3') && p.querySelector('h3').textContent === 'Para repasar');
+  assert.ok(tarjeta, 'hay tarjeta Para repasar');
+  const chips = [...tarjeta.querySelectorAll('.chip b')].map(x => x.textContent);
+  assert.deepEqual(chips, ['Armadura D'], 'solo la que toca hoy: ' + chips);
+  assert.match(tarjeta.querySelector('.chip i').textContent, /hace \d+ d|hoy/);
+  sinErrores(n);
+});

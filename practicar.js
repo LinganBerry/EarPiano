@@ -130,7 +130,8 @@
     clearTimeout(temporizador); ses = null; mod = 0; pantalla = 'inicio'; window.RepertorioAudio?.detener();
     const est = N.estadisticas(todas()), lista = todas();
     const hoyN = lista.filter(s => s.f === hoy()).reduce((x, s) => x + s.n, 0), racha = N.racha(lista, hoy());
-    const debiles = Object.entries(est.items).filter(([k, i]) => /^(sol|fa|ia|id|ih|ac|as|af|an|eg):/.test(k) && i.v >= 3 && i.a / i.v < 0.8).sort((a, b) => a[1].a / a[1].v - b[1].a / b[1].v).slice(0, 3);
+    // Repetición espaciada: lo que toca repasar hoy (fallado antes y ya cerca de olvidarse), lo más atrasado primero.
+    const debiles = window.Repaso ? window.Repaso.pendientes(window.Repaso.calcular(lista, hoy()), { max: 3, filtro: k => /^(sol|fa|ia|id|ih|ac|as|af|an|eg):/.test(k) }) : [];
     const pass = el('input', { type: 'password', autocomplete: 'current-password', placeholder: 'Contraseña', id: 'pr-pass', 'aria-label': 'Contraseña del editor' });
     const rec = el('input', { type: 'checkbox', id: 'pr-rec' });
     const msg = el('p', { className: 'aviso-e', id: 'pr-msg' });
@@ -154,7 +155,7 @@
         el('p', {}, el('button', { type: 'button', className: 'primario', onclick: entrar }, 'Entrar')), msg),
       conPase && el('p', {}, el('button', { type: 'button', onclick: sincronizar }, 'Sincronizar ahora'), ' ', el('button', { type: 'button', onclick: () => { olvidarToken(); sync = { estado: datos.pend.length ? 'pendiente' : 'local' }; pintarInicio(); } }, 'Cerrar sesión')));
     const repaso = debiles.length ? el('div', { className: 'parte' }, el('h3', {}, 'Para repasar'),
-      el('div', { className: 'chips' }, ...debiles.map(([item, i]) => el('span', { className: 'chip' }, el('b', {}, N.rotulo(item)), el('i', { className: 'rom' }, pct(i.a / i.v)))))) : null;
+      el('div', { className: 'chips' }, ...debiles.map(([item, i]) => el('span', { className: 'chip' }, el('b', {}, N.rotulo(item)), el('i', { className: 'rom' }, i.atraso > 0 ? 'hace ' + i.atraso + ' d' : 'hoy'))))) : null;
     const grupos = {};
     for (const [id, T] of Object.entries(N.TEMAS)) (grupos[T.grupo] || (grupos[T.grupo] = [])).push([id, T]);
     const tarjetas = Object.entries(grupos).map(([g, temas]) => el('section', {}, el('h2', { className: 'pr-grupo' }, g),
