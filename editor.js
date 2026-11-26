@@ -92,6 +92,7 @@
   // Si no hay pase (o venció), pide la contraseña (encima de lo que tengas abierto) y repite la acción solo.
   const MSG_TIEMPO = 'Tardó demasiado en responder. Revisa tu señal; si era una canción nueva, mira primero si ya se guardó antes de repetir.';
   async function llamar(body) {
+    if (!app.servidor) return window.RepertorioDatos.aplicar(body);   // modo local: se guarda en este dispositivo, sin contraseña
     for (let intento = 0; intento < 2; intento++) {
       if (!token && !(await pedirLogin(intento ? 'Tu sesión venció. Entra de nuevo.' : '', Boolean(abierta)))) break;
       let r, j;
@@ -109,6 +110,7 @@
   };
   const recargar = async () => {
     // La lista pública se guarda unos segundos en el borde de Vercel: con un parámetro distinto se ve lo recién guardado.
+    if (!app.servidor) { app.data = window.RepertorioDatos.leer(); return; }
     const r = await fetch('/api/canciones?fresco=' + Date.now(), { cache: 'no-store' });
     if (r.ok) app.data = await r.json();
   };
@@ -355,10 +357,10 @@
         el('p', { className: 'pista-ayuda' }, 'Importar suma y actualiza canciones; nunca quita ninguna.')),
       el('div', { className: 'grupo' }, el('h3', {}, 'Papelera'),
         el('p', {}, el('button', { type: 'button', onclick: abrirPapelera }, 'Ver papelera'))),
-      el('div', { className: 'grupo' }, el('h3', {}, 'Sesión'),
-        el('p', { className: 'pista-ayuda' }, 'Volver a la página: sales del editor y sigues con tu sesión. Cerrar sesión: la próxima vez te pedirá la contraseña.'),
-        el('p', {}, el('button', { type: 'button', onclick: salir }, 'Volver a la página'), ' ',
-          el('button', { type: 'button', onclick: cerrarSesion }, 'Cerrar sesión'))),
+      el('div', { className: 'grupo' }, el('h3', {}, app.servidor ? 'Sesión' : 'Este dispositivo'),
+        el('p', { className: 'pista-ayuda' }, app.servidor ? 'Volver a la página: sales del editor y sigues con tu sesión. Cerrar sesión: la próxima vez te pedirá la contraseña.' : 'Tus canciones se guardan solo en este dispositivo.'),
+        el('p', {}, el('button', { type: 'button', onclick: salir }, 'Volver a la página'), app.servidor && ' ',
+          app.servidor && el('button', { type: 'button', onclick: cerrarSesion }, 'Cerrar sesión'))),
       msg
     ]);
   }
@@ -373,5 +375,5 @@
   app.acciones = i => el('div', { className: 'fila-acciones' }, el('button', { type: 'button', onclick: () => abrirForm(i) }, 'Editar'));
 
   app.render();
-  if (!token) pedirLogin('');
+  if (app.servidor && !token) pedirLogin('');
 })();

@@ -2,7 +2,8 @@
   'use strict';
 
   const PARAMS = new URLSearchParams(location.search);
-  const EDITOR = PARAMS.has('editar');   // ?editar = modo editor (pide tu contraseña)
+  const SERVIDOR = PARAMS.has('servidor');   // ?servidor = tus datos en el servidor (pide tu contraseña); sin eso, todo queda en este dispositivo
+  const EDITOR = PARAMS.has('editar');   // ?editar = modo editor (con ?servidor además usa tu servidor y pide tu contraseña)
   if (EDITOR) { const e = document.getElementById('enlace-editor'); if (e) e.hidden = true; }   // ya estás en el editor: ahí el botón es "Salir"
   const NOTAS = { C: 0, 'C#': 1, Db: 1, D: 2, 'D#': 3, Eb: 3, E: 4, F: 5, 'F#': 6, Gb: 6, G: 7, 'G#': 8, Ab: 8, A: 9, 'A#': 10, Bb: 10, B: 11 };
 
@@ -479,7 +480,7 @@
   document.querySelector('.marca').addEventListener('click', () => {
     const t = Date.now();
     toques = toques.filter(x => t - x < 3000).concat(t);
-    if (!EDITOR && toques.length >= 5) location.search = '?editar';
+    if (!EDITOR && toques.length >= 5) location.search = '?editar&servidor';
   });
 
   $('q').addEventListener('input', e => { vista.q = e.target.value; render(); });
@@ -506,6 +507,7 @@
     buscar: q => { const palabras = fichas(q); return data.canciones.map(c => ({ c, p: puntaje(c, palabras) })).filter(x => x.p !== null).sort((a, b) => a.p - b.p || a.c.titulo.localeCompare(b.c.titulo, 'es')).map(x => x.c); },
     get data() { return data; },
     set data(d) { data = d; render(); },
+    servidor: SERVIDOR,
     cerroCancionEn: -1e9,
     acciones: null
   };
@@ -520,7 +522,8 @@
   async function cargar(inicial = true) {
     if (inicial) $('cuenta').textContent = '…';
     let d = window.REPERTORIO, deCopia = false;
-    try {
+    if (!SERVIDOR) d = window.RepertorioDatos.leer();   // modo local: nada de red
+    else try {
       const r = await fetch('/api/canciones', { cache: 'no-store' });
       if (r.ok) { d = await r.json(); deCopia = r.headers.get('X-Copia') === '1'; }
     } catch (e) { deCopia = true; /* sin red: se usa la copia guardada o la del sitio */ }

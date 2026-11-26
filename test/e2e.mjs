@@ -38,7 +38,7 @@ async function navegador(busqueda = '', red = {}) {
   const errores = [], vc = new VirtualConsole();
   vc.on('jsdomError', e => { if (!/Not implemented/.test(e.message)) errores.push(e.stack || e.message); });
   const dom = new JSDOM(html, {
-    url: 'http://prueba.local/' + busqueda, runScripts: 'dangerously', resources: { interceptors: [interceptor] }, pretendToBeVisual: true, virtualConsole: vc,
+    url: 'http://prueba.local/' + (red.local || /servidor/.test(busqueda) ? busqueda : busqueda.replace(/^([^#]*)/, (q, a) => a + (a ? '&' : '?') + 'servidor')), runScripts: 'dangerously', resources: { interceptors: [interceptor] }, pretendToBeVisual: true, virtualConsole: vc,
     beforeParse(w) {
       if (red.antes) red.antes(w);                       // para preparar el dispositivo antes de que cargue la página (datos guardados, etc.)
       w.matchMedia = () => ({ matches: false, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} });
@@ -1279,4 +1279,19 @@ test('PRACTICAR · Escalas y modos: al revelar, un mini piano marca las teclas d
   assert.equal(n.d.querySelectorAll('#es-piano .pk-ok').length, 2, 'la tónica de abajo y la de arriba van en verde');
   assert.match($('es-piano-texto').textContent, /no oye tu piano/);
   sinErrores(n); n.cerrar();
+});
+
+test('MODO LOCAL: el editor abre sin contraseña y guarda en el dispositivo, sin servidor', async () => {
+  memoria.clear();
+  const n = await navegador('?editar', { local: true, caido: true });   // "caido": si intentara usar la red, fallaría
+  const { d, w } = n;
+  await esperar(() => d.getElementById('e-salir'), 'barra del editor');
+  assert.equal(d.querySelector('.capa input[type=password]'), null, 'no pide contraseña');
+  assert.equal(w.RepertorioApp.servidor, false);
+  assert.equal(d.getElementById('sin-red').hidden, true, 'sin aviso de "sin conexión": no usa la red');
+  const r = w.RepertorioDatos.aplicar({ accion: 'guardar', cancion: { titulo: 'Local', tono: 'C', partes: [{ prog: 'C | G' }] } });
+  assert.ok(r.ok);
+  assert.equal(JSON.parse(w.localStorage.getItem('earpiano-canciones-v1')).canciones.length, 1);
+  assert.equal(memoria.size, 0, 'el servidor no recibió nada');
+  sinErrores(n);
 });
