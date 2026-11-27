@@ -170,13 +170,18 @@
   const sumarDias = (f, d) => { const x = new Date(f + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() + d); return x.toISOString().slice(0, 10); };
   // Elige el tema (y su nivel) de la siguiente pregunta de la sesión diaria: pesa más lo que dominas menos y lo que hace más días que
   // no practicas; lo que nunca has hecho también pesa. nivelDe(tema) = nivel elegido por la persona. Nunca repite el tema anterior.
+  // Cuántos ejercicios de un tema y nivel toca repasar hoy (fallados antes y ya vencidos).
+  function vencidosDe(est, tema, nivel) {
+    if (!est || !est.repaso) return 0;
+    try { return candidatos(tema, nivel).filter(c => { const r = est.repaso[c.item]; return r && r.fallos > 0 && r.atraso >= 0; }).length; } catch (e) { return 0; }
+  }
   function elegirTemaDiario(est, sesiones, hoy, nivelDe, rng, evitar) {
     const ultimo = {};
     for (const s of sesiones || []) if (!ultimo[s.t] || s.f > ultimo[s.t]) ultimo[s.t] = s.f;
     const todos = Object.keys(TEMAS).map(tema => {
       const pedido = nivelDe(tema), nivel = TEMAS[tema].niveles.some(n => n.id === pedido) ? pedido : 1;
       const p = precision(est, tema, nivel), dias = ultimo[tema] ? Math.max(0, diasEntre(ultimo[tema], hoy)) : null;
-      return { tema, nivel, peso: (p == null ? 2.5 : 1 + 4 * (1 - p)) + (dias == null ? 1 : Math.min(dias, 7) * 0.15) };
+      return { tema, nivel, peso: (p == null ? 2.5 : 1 + 4 * (1 - p)) + (dias == null ? 1 : Math.min(dias, 7) * 0.15) + Math.min(vencidosDe(est, tema, nivel), 5) * 0.4 };
     });
     const lista = todos.length > 1 ? todos.filter(c => c.tema !== evitar) : todos;
     let r = rng() * lista.reduce((s, c) => s + c.peso, 0);
@@ -200,7 +205,15 @@
 
   // --- preguntas ---
   // Peso de cada ejercicio: lo que fallas o no has visto sale más. rng = () => número en [0,1).
-  const peso = (est, item) => { const i = est && est.items[item]; return i && i.v ? 1 + 4 * (1 - i.a / i.v) : 2; };
+  // Repaso espaciado (opcional): si est.repaso existe (lo calcula repaso.js), lo que toca repasar y ya fallaste sale más,
+  // lo que está bien espaciado sale menos y lo que acabas de fallar vuelve pronto. Sin est.repaso todo queda como antes.
+  const factorRepaso = (est, item) => {
+    const r = est && est.repaso && est.repaso[item];
+    if (!r) return 1;
+    if (r.atraso >= 0) return r.fallos > 0 ? 1.5 + Math.min(r.atraso, 7) * 0.3 : 1;
+    return r.racha > 0 ? 0.35 : 1.5;
+  };
+  const peso = (est, item) => { const i = est && est.items[item]; return (i && i.v ? 1 + 4 * (1 - i.a / i.v) : 2) * factorRepaso(est, item); };
   function elegir(cands, est, rng, evitar) {
     const lista = cands.length > 1 ? cands.filter(c => c.item !== evitar) : cands;
     const total = lista.reduce((s, c) => s + peso(est, c.item), 0);

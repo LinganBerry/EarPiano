@@ -342,6 +342,8 @@
     if (!ses) return;
     if (!primera && ses.fase !== 'feedback') return;
     clearTimeout(temporizador);
+    // Repaso espaciado: qué toca repasar, contando también lo que ya contestaste en esta sesión.
+    if (window.Repaso) ses.est.repaso = window.Repaso.calcular([...todas(), { f: hoy(), q: ses.hechas }], hoy());
     if (ses.diaria) {
       if (!primera && restante() <= 0) return terminar();
       const sel = N.elegirTemaDiario(ses.est, todas(), hoy(), nivelDe, Math.random, ses.previaTema);

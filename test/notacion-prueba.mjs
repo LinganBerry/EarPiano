@@ -362,3 +362,26 @@ test('svgAcorde: dibuja las tres notas, las líneas adicionales y las alteracion
     assert.ok(Math.min(...ys) > 10 && Math.max(...ys) < 150, `las notas caben: ${Math.min(...ys)}..${Math.max(...ys)}`);
   });
 });
+
+test('repaso espaciado: lo que toca repasar sale más, lo bien espaciado sale menos, y sin repaso todo igual', () => {
+  const cands = N.candidatos('sol', 1).map(c => c.item), [A, B] = cands, resto = cands.slice(2);
+  const items = Object.fromEntries(cands.map(i => [i, { v: 10, a: 10, ms: 0 }]));
+  const est = { items, repaso: { [A]: { fallos: 2, racha: 0, atraso: 3 }, [B]: { fallos: 1, racha: 3, atraso: -9 } } };
+  assert.ok(Math.abs(N.peso(est, A) - 2.4) < 1e-9, 'vencido y fallado: 1 x (1,5 + 3 x 0,3)');
+  assert.ok(Math.abs(N.peso(est, B) - 0.35) < 1e-9, 'bien espaciado: pesa poco');
+  assert.equal(N.peso({ items, repaso: { [A]: { fallos: 1, racha: 0, atraso: -1 } } }, A), 1.5, 'recién fallado: vuelve pronto');
+  assert.equal(N.peso({ items, repaso: { [A]: { fallos: 0, racha: 2, atraso: 4 } } }, A), 1, 'vencido pero nunca fallado: igual');
+  assert.equal(N.peso({ items }, A), 1, 'sin repaso: pesos de siempre');
+  const rng = semilla(21), cuenta = {};
+  for (let i = 0; i < 6000; i++) { const p = N.crearPregunta('sol', 1, est, rng, null); cuenta[p.item] = (cuenta[p.item] || 0) + 1; }
+  const prom = resto.reduce((s, i) => s + (cuenta[i] || 0), 0) / resto.length;
+  assert.ok(cuenta[A] > 1.8 * prom, `A=${cuenta[A]} prom=${prom}`); assert.ok(cuenta[B] < 0.6 * prom, `B=${cuenta[B]} prom=${prom}`);
+});
+
+test('sesión diaria: un tema con ejercicios vencidos sale más que sin repaso', () => {
+  const nivelDe = () => 1, base = N.estadisticas([]);
+  const repaso = Object.fromEntries(N.candidatos('sol', 1).map(c => [c.item, { fallos: 2, racha: 0, atraso: 2 }]));
+  const contar = est => { const rng = semilla(5); let n = 0; for (let i = 0; i < 6000; i++) if (N.elegirTemaDiario(est, [], '2026-11-27', nivelDe, rng, null).tema === 'sol') n++; return n; };
+  const sin = contar(base), con = contar({ ...base, repaso });
+  assert.ok(con > 1.25 * sin, `con repaso=${con} sin=${sin}`);
+});
