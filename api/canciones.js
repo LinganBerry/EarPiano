@@ -4,8 +4,10 @@
 //
 // Lo que este servidor PUEDE hacer: agregar y editar canciones, mandar una a la papelera y restaurarla,
 // importar una copia (suma y actualiza, nunca quita) y cambiar el nombre/intro de la página.
-// Lo que NO puede hacer: no existe ninguna ruta ni función que elimine canciones o archivos.
+// Lo que NO puede hacer: no existe ninguna ruta ni función que elimine archivos del almacén.
 // "Borrar" solo marca la canción como borrada (borrada: true); sigue guardada y se puede restaurar.
+// Única excepción, a propósito y con doble confirmación: vaciarPapelera saca del repertorio las canciones que ya estaban en la
+// papelera (exige confirmar: 'VACIAR-PAPELERA'). Las copias diarias de repertorio/historial/ no se tocan.
 // Además, la primera vez que hay un cambio cada día se guarda una copia del estado anterior en repertorio/historial/.
 import { leer, escribir, crear, ConflictoError, ExisteError } from '../lib/almacen.js';
 import { tokenValido, problemaConClave } from '../lib/auth.js';
@@ -119,6 +121,13 @@ const ACCIONES = {
     const { borrada, ...resto } = doc.canciones[i];
     doc.canciones[i] = { ...resto, actualizada: new Date().toISOString() };
     return { cancion: publica(doc.canciones[i]) };
+  },
+  vaciarPapelera(doc, cuerpo) {
+    if (cuerpo.confirmar !== 'VACIAR-PAPELERA') return { error: 'Falta la confirmación para vaciar la papelera.', status: 400 };
+    const antes = doc.canciones.length;
+    doc.canciones = doc.canciones.filter(c => !c.borrada);
+    const quitadas = antes - doc.canciones.length;
+    return quitadas ? { quitadas } : { quitadas: 0, sinCambios: true };
   },
   ajustes(doc, cuerpo) {
     doc.nombre = texto(cuerpo.nombre, 120);

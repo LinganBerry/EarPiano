@@ -154,7 +154,7 @@ test('borrar = papelera; restaurar la devuelve; nada se elimina del almacén', a
   assert.equal((await json(await post(canciones, { token, accion: 'borrar', id: 'noexiste1234' }))).status, 404);
 });
 
-test('no existe ninguna acción de borrado definitivo', async () => {
+test('no existe ninguna acción de borrado definitivo suelta (la única forma es vaciarPapelera, con confirmación)', async () => {
   limpiarTodo();
   const token = await pase();
   await guardar(token, cancion());
@@ -370,4 +370,57 @@ test('ids viejos que ya sirven (aunque sean cortos) no se cambian; solo se arreg
   assert.equal((await guardar(token, { ...l[0], nota: 'hola' })).status, 200, 'una canción de id corto se puede editar');
   assert.equal((await lista()).length, 5, 'sin duplicar');
   assert.equal((await json(await post(canciones, { token, accion: 'borrar', id: 'c1' }))).status, 200, 'y mandar a la papelera');
+});
+
+// --- vaciar papelera y empezar de cero (los dos borrados, con confirmación obligatoria) ---
+test('vaciarPapelera: sin pase 401, sin confirmación 400 y no cambia nada', async () => {
+  limpiarTodo();
+  const token = await pase();
+  const { cancion: c } = await guardar(token, cancion());
+  await post(canciones, { token, accion: 'borrar', id: c.id });
+  assert.equal((await post(canciones, { token: 'malo', accion: 'vaciarPapelera', confirmar: 'VACIAR-PAPELERA' })).status, 401);
+  for (const confirmar of [undefined, true, 'si', 'vaciar-papelera', 'EMPEZAR-DE-CERO']) {
+    assert.equal((await post(canciones, { token, accion: 'vaciarPapelera', confirmar })).status, 400, 'confirmar: ' + String(confirmar));
+  }
+  assert.equal((await json(await post(canciones, { token, accion: 'papelera' }))).canciones.length, 1, 'sigue en la papelera');
+});
+
+test('vaciarPapelera: quita solo lo de la papelera, deja las demás y no toca las copias diarias', async () => {
+  limpiarTodo();
+  const token = await pase();
+  const a = (await guardar(token, cancion({ titulo: 'Uno' }))).cancion, b = (await guardar(token, cancion({ titulo: 'Dos' }))).cancion;
+  await guardar(token, cancion({ titulo: 'Tres' }));
+  await post(canciones, { token, accion: 'borrar', id: a.id }); await post(canciones, { token, accion: 'borrar', id: b.id });
+  const copias = () => [...memoria.keys()].filter(k => k.startsWith('repertorio/historial/')).sort();
+  const antes = copias();
+  const r = await json(await post(canciones, { token, accion: 'vaciarPapelera', confirmar: 'VACIAR-PAPELERA' }));
+  assert.equal(r.status, 200); assert.equal(r.quitadas, 2);
+  assert.deepEqual((await lista()).map(x => x.titulo), ['Tres']);
+  assert.equal((await json(await post(canciones, { token, accion: 'papelera' }))).canciones.length, 0, 'la papelera quedó vacía');
+  assert.equal(JSON.parse(memoria.get('repertorio/canciones.json').texto).canciones.length, 1);
+  assert.deepEqual(copias(), antes, 'las copias diarias no se tocan');
+  const otra = await json(await post(canciones, { token, accion: 'vaciarPapelera', confirmar: 'VACIAR-PAPELERA' }));
+  assert.equal(otra.status, 200); assert.equal(otra.quitadas, 0, 'con la papelera vacía no hace nada ni falla');
+});
+
+test('progreso reiniciar: sin pase 401, sin confirmación 400 y no cambia nada', async () => {
+  limpiarTodo();
+  const token = await pase();
+  await enviar(token, [sesion(), sesion()]);
+  assert.equal((await post(progreso, { token: 'malo', accion: 'reiniciar', confirmar: 'EMPEZAR-DE-CERO' })).status, 401);
+  for (const confirmar of [undefined, true, 'si', 'VACIAR-PAPELERA']) assert.equal((await post(progreso, { token, accion: 'reiniciar', confirmar })).status, 400, 'confirmar: ' + String(confirmar));
+  assert.equal((await json(await post(progreso, { token, accion: 'leer' }))).sesiones.length, 2);
+});
+
+test('progreso reiniciar: deja el historial vacío, dice cuántas borró y se puede seguir guardando', async () => {
+  limpiarTodo();
+  const token = await pase();
+  const vacio = await json(await post(progreso, { token, accion: 'reiniciar', confirmar: 'EMPEZAR-DE-CERO' }));
+  assert.equal(vacio.status, 200); assert.equal(vacio.borradas, 0, 'sin historial previo también funciona');
+  await enviar(token, [sesion(), sesion(), sesion()]);
+  const r = await json(await post(progreso, { token, accion: 'reiniciar', confirmar: 'EMPEZAR-DE-CERO' }));
+  assert.equal(r.status, 200); assert.equal(r.borradas, 3);
+  assert.deepEqual((await json(await post(progreso, { token, accion: 'leer' }))).sesiones, []);
+  const nueva = await enviar(token, [sesion()]);
+  assert.equal(nueva.guardadas, 1); assert.equal(nueva.total, 1, 'empieza de cero de verdad');
 });

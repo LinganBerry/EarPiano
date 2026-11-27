@@ -1,6 +1,7 @@
 // Progreso de práctica (solo para ti): POST /api/progreso { token, accion: 'leer' | 'sesiones', sesiones? }
 // Exige el mismo pase de sesión del editor. Guarda las últimas MAX_SESIONES sesiones en repertorio/progreso.json.
-// Solo agrega (una sesión con el mismo id no se repite); no hay ninguna ruta que borre.
+// Solo agrega (una sesión con el mismo id no se repite). Única excepción, a propósito y con confirmación: 'reiniciar'
+// deja el historial vacío (exige confirmar: 'EMPEZAR-DE-CERO'); no elimina el archivo, lo reescribe vacío.
 import { leer, escribir, crear, ConflictoError, ExisteError } from '../lib/almacen.js';
 import { tokenValido, problemaConClave } from '../lib/auth.js';
 import { limpiarSesion, MAX_SESIONES } from '../lib/progreso.js';
@@ -21,6 +22,19 @@ async function agregar(nuevas) {
     try {
       if (actual) await escribir(RUTA, doc, { etag: actual.etag }); else await crear(RUTA, doc);
       return { guardadas: nuevasSinRepetir.length, total: doc.sesiones.length };
+    } catch (e) { if (e instanceof ConflictoError || e instanceof ExisteError) continue; throw e; }
+  }
+  return { error: 'Hubo cambios al mismo tiempo. Intenta de nuevo.', status: 409 };
+}
+
+async function reiniciar() {
+  for (let i = 0; i < 12; i++) {
+    const actual = await leer(RUTA);
+    const antes = Array.isArray(actual?.data?.sesiones) ? actual.data.sesiones.length : 0;
+    const doc = { version: 1, sesiones: [], reiniciado: new Date().toISOString() };
+    try {
+      if (actual) await escribir(RUTA, doc, { etag: actual.etag }); else await crear(RUTA, doc);
+      return { borradas: antes };
     } catch (e) { if (e instanceof ConflictoError || e instanceof ExisteError) continue; throw e; }
   }
   return { error: 'Hubo cambios al mismo tiempo. Intenta de nuevo.', status: 409 };
@@ -47,6 +61,12 @@ export async function POST(request) {
       const limpias = cuerpo.sesiones.map(limpiarSesion);
       if (limpias.some(s => !s)) return responder({ error: 'Alguna sesión no es válida.' }, 400);
       const res = await agregar(limpias);
+      if (res.error) return responder({ error: res.error }, res.status);
+      return responder({ ok: true, ...res });
+    }
+    if (cuerpo.accion === 'reiniciar') {
+      if (cuerpo.confirmar !== 'EMPEZAR-DE-CERO') return responder({ error: 'Falta la confirmación para empezar de cero.' }, 400);
+      const res = await reiniciar();
       if (res.error) return responder({ error: res.error }, res.status);
       return responder({ ok: true, ...res });
     }

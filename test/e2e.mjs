@@ -1222,3 +1222,69 @@ test('REPASO ESPACIADO: "Para repasar" muestra solo lo fallado que ya toca, no l
   assert.match(tarjeta.querySelector('.chip i').textContent, /hace \d+ d|hoy/);
   sinErrores(n);
 });
+
+test('EMPEZAR DE CERO: sin contraseña borra solo este dispositivo; con contraseña también el servidor; pide confirmación', async () => {
+  const dia = atras => new Date(Date.now() - atras * 86400000).toLocaleDateString('en-CA');
+  const sesion = (id, f) => ({ id, t: 'armadura', l: 1, f, n: 2, a: 1, ms: 4000, q: [['as:D', 0, 1000], ['as:G', 1, 1000]] });
+  // a) sin contraseña
+  memoria.clear();
+  const a = await navegador('', { antes: w => { w.localStorage.setItem('repertorio-practica-v1', JSON.stringify({ servidor: [], pend: [sesion('bbbbbbbb01', dia(2)), sesion('bbbbbbbb02', dia(1))], apartadas: [] })); w.localStorage.setItem('repertorio-retos-v1', '{"x":1}'); } });
+  await abrirPractica(a);
+  a.$('pr-stats-ir').click();
+  await esperar(() => a.$('pr-reiniciar'), 'botón Empezar de cero');
+  let preguntas = 0; a.w.confirm = () => { preguntas++; return false; };
+  a.$('pr-reiniciar').click();
+  assert.equal(preguntas, 1, 'pidió confirmación');
+  assert.equal(JSON.parse(a.w.localStorage.getItem('repertorio-practica-v1')).pend.length, 2, 'si dices que no, no se borra nada');
+  a.w.confirm = () => true;
+  a.$('pr-reiniciar').click();
+  await esperar(() => /Aún no hay práctica/.test(a.$('pr-stats')?.textContent || ''), 'historial vacío');
+  assert.deepEqual(JSON.parse(a.w.localStorage.getItem('repertorio-practica-v1')), { servidor: [], pend: [], apartadas: [] });
+  assert.equal(a.w.localStorage.getItem('repertorio-retos-v1'), null, 'también las estadísticas de Reconocer');
+  sinErrores(a);
+
+  // b) con contraseña: el servidor también queda vacío
+  memoria.clear();
+  memoria.set('repertorio/progreso.json', { texto: JSON.stringify({ version: 1, sesiones: [sesion('cccccccc01', dia(3))] }), etag: '"p0"' });
+  const b = await navegador('', { antes: w => w.localStorage.setItem('repertorio-practica-v1', JSON.stringify({ servidor: [sesion('cccccccc01', dia(3))], pend: [], apartadas: [] })) });
+  await abrirPractica(b);
+  await esperar(() => b.d.querySelector('#practica details'), 'formulario de entrada');
+  b.d.querySelector('#pr-pass').value = PASE; b.d.querySelector('#practica details .primario').click();
+  await esperar(() => /Sincronizado/.test(b.$('pr-estado')?.textContent || ''), 'estado sincronizado');
+  b.$('pr-stats-ir').click();
+  await esperar(() => b.$('pr-reiniciar'), 'botón Empezar de cero');
+  b.w.confirm = () => true;
+  b.$('pr-reiniciar').click();
+  await esperar(() => /Aún no hay práctica/.test(b.$('pr-stats')?.textContent || ''), 'historial vacío');
+  assert.deepEqual(JSON.parse(memoria.get('repertorio/progreso.json').texto).sesiones, [], 'el servidor quedó vacío');
+  sinErrores(b);
+});
+
+test('PAPELERA: "Vaciar papelera" pide dos confirmaciones y solo quita lo de la papelera', async () => {
+  memoria.clear();
+  const c = (id, titulo, extra = {}) => ({ id, titulo, artista: 'A', tono: 'G', partes: [{ nombre: 'Coro', tono: '', prog: 'G | C', letra: '', pista: '' }], ...extra });
+  memoria.set('repertorio/canciones.json', { texto: JSON.stringify({ version: 2, nombre: 'EarPiano', intro: '', canciones: [c('idvivo0001', 'Viva'), c('idpapel001', 'Vieja', { borrada: true }), c('idpapel002', 'Otra vieja', { borrada: true })] }), etag: '"e1"' });
+  const n = await navegador('?editar');
+  const { d, $, escribir, boton } = n;
+  const pass = await esperar(() => d.querySelector('.capa input[type=password]'), 'ventana de contraseña');
+  escribir(pass, PASE); boton('Entrar').click();
+  await esperar(() => !d.querySelector('.capa'), 'entró');
+  boton('Ajustes').click();
+  await esperar(() => $('copia-ultima'), 'Ajustes');
+  boton('Ver papelera').click();
+  await esperar(() => $('e-vaciar'), 'botón Vaciar papelera');
+  assert.match($('e-vaciar').textContent, /\(2\)/);
+  const respuestas = [false, true, false]; const textos = [];
+  n.w.confirm = t => { textos.push(t); return respuestas.shift() ?? false; };
+  $('e-vaciar').click();                                  // dice que no a la primera: no pasa nada
+  assert.equal(textos.length, 1); assert.match(textos[0], /2 canciones/); assert.match(textos[0], /Vieja/);
+  assert.equal(JSON.parse(memoria.get('repertorio/canciones.json').texto).canciones.length, 3);
+  $('e-vaciar').click();                                  // sí a la primera, no a la última: tampoco
+  assert.equal(textos.length, 3);
+  assert.equal(JSON.parse(memoria.get('repertorio/canciones.json').texto).canciones.length, 3, 'sin la última confirmación no se borra');
+  n.w.confirm = () => true;
+  $('e-vaciar').click();
+  await esperar(() => !$('e-vaciar'), 'la papelera quedó vacía');
+  assert.deepEqual(JSON.parse(memoria.get('repertorio/canciones.json').texto).canciones.map(x => x.titulo), ['Viva']);
+  sinErrores(n);
+});

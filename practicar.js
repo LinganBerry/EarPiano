@@ -256,6 +256,19 @@
       el('div', { className: 'est-tema-cab' }, el('b', {}, N.TEMAS[x.tema].nombre + ' · nivel ' + x.nivel), el('span', {}, pct(p) + ' · ' + x.t.n + ' preguntas')),
       el('div', { className: 'est-medidor', rol: 'img', 'aria-label': 'Acierto reciente ' + pct(p) }, el('span', { style: 'width:' + Math.round((p || 0) * 100) + '%;background:' + colorPct(p) })));
   }
+  // Empezar el historial de cero: sesiones (servidor y este dispositivo) y estadísticas de Reconocer acordes. No se puede deshacer.
+  async function reiniciarHistorial() {
+    const n = todas().length, conPase = !!token();
+    if (!confirm('¿Empezar el historial de cero?\n\nSe borran ' + n + ' sesiones de práctica ' + (conPase ? 'del servidor y de este dispositivo' : 'de este dispositivo') + ' y las estadísticas de Reconocer acordes. No se puede deshacer.')) return;
+    if (conPase) {
+      const r = await llamar('reiniciar', { confirmar: 'EMPEZAR-DE-CERO' });
+      if (!r.ok) { alert('No se pudo borrar en el servidor (' + (r.j.error || 'error') + '). No se cambió nada.'); return; }
+    }
+    datos.servidor = []; datos.pend = []; datos.apartadas = []; persistir();
+    try { localStorage.removeItem('repertorio-retos-v1'); } catch (e) { /* nada */ }
+    sync = { estado: conPase ? 'ok' : 'local', texto: '' };
+    pintarEstadisticas();
+  }
   function pintarEstadisticas() {
     dejarInicio();
     clearTimeout(temporizador); ses = null; pantalla = 'estadisticas'; window.RepertorioAudio?.detener();
@@ -275,7 +288,8 @@
         filas.length ? el('div', { className: 'parte' }, el('h3', {}, 'Por tema'), ...filas.map(x => medidorTema(x, est))) : null,
         deb.length ? el('div', { className: 'parte' }, el('h3', {}, 'Puntos débiles'), el('div', { className: 'chips' }, ...deb.map(d => el('span', { className: 'chip' }, el('b', {}, d.rotulo), el('i', { className: 'rom' }, pct(d.acierto) + ' · ' + d.intentos + ' int.'))))) : null,
         len.length ? el('div', { className: 'parte' }, el('h3', {}, 'Los más lentos'), el('div', { className: 'chips' }, ...len.map(d => el('span', { className: 'chip' }, el('b', {}, d.rotulo), el('i', { className: 'rom' }, d.seg + ' s'))))) : null,
-        el('p', {}, el('button', { type: 'button', className: 'primario', onclick: () => empezarDiaria() }, 'Empezar sesión diaria · ' + CFG.minutos + ' min'))));
+        el('p', {}, el('button', { type: 'button', className: 'primario', onclick: () => empezarDiaria() }, 'Empezar sesión diaria · ' + CFG.minutos + ' min')),
+        el('p', { className: 'pista-ayuda' }, el('button', { type: 'button', id: 'pr-reiniciar', onclick: reiniciarHistorial }, 'Empezar de cero'))));
     $('pr-stats').focus(); caja.scrollTop = 0;
   }
 

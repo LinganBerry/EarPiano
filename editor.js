@@ -311,8 +311,18 @@
   async function abrirPapelera() {
     const { ok, j } = await llamar({ accion: 'papelera' });
     const msg = el('p', { className: 'aviso-e' });
-    const filas = el('div', {});
-    const pintar = canciones => filas.replaceChildren(...(canciones.length ? canciones.map(c => el('p', {},
+    const filas = el('div', {}), acciones = el('p', {});
+    const vaciar = async canciones => {
+      const titulos = canciones.slice(0, 8).map(c => '• ' + c.titulo).join('\n') + (canciones.length > 8 ? '\n… y ' + (canciones.length - 8) + ' más' : '');
+      if (!confirm('¿Vaciar la papelera?\n\nSe quitan ' + canciones.length + ' canciones y ya no se podrán restaurar desde la app:\n' + titulos)) return;
+      if (!confirm('Última confirmación: esto no se puede deshacer desde la app. ¿Vaciar la papelera?')) return;
+      const r = await llamar({ accion: 'vaciarPapelera', confirmar: 'VACIAR-PAPELERA' });
+      if (!r.ok) { msg.textContent = 'No se pudo vaciar: ' + (r.j.error || 'error del servidor'); return; }
+      msg.textContent = '';
+      pintar([]);
+      exito();
+    };
+    const pintar = canciones => { acciones.replaceChildren(...(canciones.length ? [el('button', { type: 'button', id: 'e-vaciar', onclick: () => vaciar(canciones) }, 'Vaciar papelera (' + canciones.length + ')')] : [])); filas.replaceChildren(...(canciones.length ? canciones.map(c => el('p', {},
       el('b', {}, c.titulo), c.artista ? ' · ' + c.artista + ' ' : ' ',
       el('button', { type: 'button', onclick: async () => {
         const r = await llamar({ accion: 'restaurar', id: c.id });
@@ -321,10 +331,10 @@
         app.render();
         pintar(canciones.filter(x => x.id !== c.id));
         exito();
-      } }, 'Restaurar'))) : [el('p', { className: 'pista-ayuda' }, 'La papelera está vacía.')]));
+      } }, 'Restaurar'))) : [el('p', { className: 'pista-ayuda' }, 'La papelera está vacía.')])); };
     pintar(ok ? j.canciones : []);
     if (!ok) msg.textContent = 'No se pudo leer la papelera: ' + (j.error || 'error del servidor');
-    abrirCapa('Papelera', [el('p', { className: 'pista-ayuda' }, 'Las canciones que mandas a la papelera siguen guardadas en el servidor. Aquí las restauras.'), filas, msg]);
+    abrirCapa('Papelera', [el('p', { className: 'pista-ayuda' }, 'Las canciones que mandas a la papelera siguen guardadas en el servidor. Aquí las restauras o la vacías (las copias diarias del servidor no se tocan).'), filas, acciones, msg]);
   }
 
   function cerrarSesion() {
