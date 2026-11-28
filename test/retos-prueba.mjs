@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import { readFile } from 'node:fs/promises';
 
 const ctx = { console }; ctx.window = ctx; vm.createContext(ctx);
+vm.runInContext(await readFile(new URL('../repaso.js', import.meta.url), 'utf8'), ctx);   // repaso espaciado (retos.js lo usa si está)
 vm.runInContext(await readFile(new URL('../retos.js', import.meta.url), 'utf8'), ctx);
 // Los objetos creados dentro de vm tienen otros prototipos: se copian a objetos normales para compararlos.
 const J = x => JSON.parse(JSON.stringify(x));
@@ -95,4 +96,50 @@ test('"lo que más fallas sale más": respeta lo que elegiste y solo ayuda si ac
   assert.equal(cuantos({ calidad: 'm', inversiones: false, repasar: true }, 'Db|M|0'), 0, 'nunca sale algo que no elegiste');
   assert.equal(cuantos({ calidad: 'M', inversiones: false, repasar: true }, 'C|M|2'), 0, 'sin inversiones no salen inversiones');
   let prev = null; for (let i = 0; i < 300; i++) { const r = R.crearReto({ calidad: 'M', repasar: true }, semilla(i), prev, est); assert.notEqual(r.item, prev); prev = r.item; }
+});
+
+test('registrar con fecha: guarda el resultado de cada día; un solo fallo ese día lo marca como fallo; solo ' + 20 + ' días', () => {
+  const est = R.vacias();
+  R.registrar(est, 'C|M|0', true, 1000, '2026-11-01'); R.registrar(est, 'C|M|0', true, 900, '2026-11-01');
+  assert.deepEqual(J(est.items['C|M|0'].h), [['2026-11-01', 1]]);
+  R.registrar(est, 'C|M|0', false, 0, '2026-11-01'); R.registrar(est, 'C|M|0', true, 800, '2026-11-01');
+  assert.deepEqual(J(est.items['C|M|0'].h), [['2026-11-01', 0]], 'un fallo del día no se borra por acertar después');
+  for (let d = 2; d <= 28; d++) R.registrar(est, 'C|M|0', true, 700, '2026-11-' + String(d).padStart(2, '0'));
+  assert.equal(est.items['C|M|0'].h.length, 20); assert.equal(est.items['C|M|0'].h[19][0], '2026-11-28');
+  const sin = R.vacias(); R.registrar(sin, 'D|M|0', true, 500);
+  assert.deepEqual(J(sin.items['D|M|0']), { v: 1, a: 1, ms: 500, mejor: 500 }, 'sin fecha no se agrega nada');
+});
+
+test('limpiar conserva el historial por día válido y descarta lo dañado', () => {
+  const raw = { items: { 'C|M|0': { v: 3, a: 2, ms: 3000, mejor: 900, h: [['2026-11-01', 1], ['mal', 1], ['2026-11-02', 7], 'x', ['2026-11-03', 0]] }, 'D|M|0': { v: 1, a: 1, ms: 5, mejor: 5, h: 'no' } } };
+  const lim = R.limpiar(raw);
+  assert.deepEqual(lim.items['C|M|0'].h, [['2026-11-01', 1], ['2026-11-03', 0]]);
+  assert.equal('h' in lim.items['D|M|0'], false);
+  const largo = { items: { 'E|M|0': { v: 30, a: 30, ms: 1, mejor: 1, h: Array.from({ length: 30 }, (_, i) => ['2026-10-' + String(i + 1).padStart(2, '0'), 1]) } } };
+  assert.equal(R.limpiar(largo).items['E|M|0'].h.length, 20);
+});
+
+test('repaso espaciado en retos: solo cuenta lo que ya toca y fallaste alguna vez; los datos viejos siguen como antes', () => {
+  const hoy = '2026-11-27', est = R.vacias();
+  const dias = (item, ...h) => { est.items[item] = { v: h.length, a: h.filter(x => x[1]).length, ms: 0, mejor: 0, h }; };
+  dias('Db|M|0', ['2026-11-24', 0]);                                                          // fallado hace 3 días: toca
+  dias('Eb|M|0', ['2026-11-27', 0]);                                                          // fallado hoy: toca mañana
+  dias('F|M|0', ['2026-10-01', 0], ['2026-10-02', 1], ['2026-10-05', 1], ['2026-10-13', 1], ['2026-11-20', 1]);   // dominado y espaciado: aún no toca
+  dias('G|M|0', ['2026-11-20', 1]);                                                           // nunca fallado
+  est.items['A|M|0'] = { v: 5, a: 1, ms: 0, mejor: 0 };                                       // dato viejo sin días: criterio de antes (80 %)
+  const f = R.debiles(est, { calidad: 'M', inversiones: false, hoy });
+  assert.deepEqual(f.map(x => x.item).sort(), ['A|M|0', 'Db|M|0']);
+  assert.ok(f.find(x => x.item === 'Db|M|0').peso >= 3, 'atrasado y fallado: pesa más');
+  const mas = R.debiles(est, { calidad: 'M', inversiones: false, hoy: '2026-12-20' }).map(x => x.item);
+  assert.ok(mas.includes('F|M|0'), 'con el tiempo, lo dominado vuelve a tocar antes de olvidarse');
+});
+
+test('crearReto con repasar: el reto vencido sale mucho más que uno al azar, y el que aún no toca no se fuerza', () => {
+  const est = R.vacias(), hoy = R.hoy();
+  const ayer = new Date(Date.now() - 3 * 86400000).toLocaleDateString('en-CA');
+  est.items['Db|M|0'] = { v: 1, a: 0, ms: 0, mejor: 0, h: [[ayer, 0]] };
+  est.items['Eb|M|0'] = { v: 1, a: 0, ms: 0, mejor: 0, h: [[hoy, 0]] };
+  const cuantos = item => { const az = semilla(7); let c = 0, prev = null; for (let i = 0; i < 1500; i++) { const r = R.crearReto({ calidad: 'M', inversiones: false, repasar: true }, az, prev, est); prev = r.item; if (r.item === item) c++; } return c; };
+  const venc = cuantos('Db|M|0'), no = cuantos('Eb|M|0');
+  assert.ok(venc > 450, 'vencido: ' + venc); assert.ok(no < 200, 'sin vencer sale como cualquiera: ' + no);
 });

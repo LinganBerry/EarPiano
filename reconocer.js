@@ -123,7 +123,7 @@
     if (!ses || ses.fase !== 'pregunta' || ses.pc == null || !ses.cal) return;
     ses.ms = Math.min(120000, Math.max(0, Math.round(performance.now() - ses.t0)));
     ses.res = comprobar(ses.reto, ses.pc, ses.cal);
-    R.registrar(est, ses.reto.item, ses.res.bien, ses.ms); guardar(EST, est);
+    R.registrar(est, ses.reto.item, ses.res.bien, ses.ms, R.hoy()); guardar(EST, est);
     ses.hechas.push({ item: ses.reto.item, nombre: ses.reto.nombre, corta: ses.reto.corta, bien: ses.res.bien, ms: ses.ms });
     ses.fase = 'revisado'; ses.tRevela = performance.now();
     pintar();

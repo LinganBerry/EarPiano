@@ -794,6 +794,7 @@ test('RECONOCER ACORDES: ver el acorde, elegir raíz y calidad, comprobar, pista
   const est = JSON.parse(n.w.localStorage.getItem('repertorio-reconocer-v1'));
   assert.equal(est.items['C#|m|0'].v, 10); assert.equal(est.items['C#|m|0'].a, 4);
   assert.equal(n.w.localStorage.getItem('repertorio-retos-v1'), null, 'no mezcla sus estadísticas con las de tocar acordes');
+  assert.deepEqual(est.items['C#|m|0'].h, [[n.w.Retos.hoy(), 0]], 'guarda el resultado del día para el repaso espaciado (un fallo ese día cuenta como fallo)');
 
   n.w.history.back();                                          // Atrás desde el resultado: menú, con el progreso
   await esperar(() => n.$('rc-empezar-10') && /10 acordes · 40% bien/.test(n.$('rc-progreso').textContent), 'menú con el progreso');
@@ -1228,7 +1229,7 @@ test('EMPEZAR DE CERO: sin contraseña borra solo este dispositivo; con contrase
   const sesion = (id, f) => ({ id, t: 'armadura', l: 1, f, n: 2, a: 1, ms: 4000, q: [['as:D', 0, 1000], ['as:G', 1, 1000]] });
   // a) sin contraseña
   memoria.clear();
-  const a = await navegador('', { antes: w => { w.localStorage.setItem('repertorio-practica-v1', JSON.stringify({ servidor: [], pend: [sesion('bbbbbbbb01', dia(2)), sesion('bbbbbbbb02', dia(1))], apartadas: [] })); w.localStorage.setItem('repertorio-retos-v1', '{"x":1}'); } });
+  const a = await navegador('', { antes: w => { w.localStorage.setItem('repertorio-practica-v1', JSON.stringify({ servidor: [], pend: [sesion('bbbbbbbb01', dia(2)), sesion('bbbbbbbb02', dia(1))], apartadas: [] })); for (const k of ['repertorio-reconocer-v1', 'repertorio-prog-v1', 'repertorio-esc-v1', 'repertorio-retos-v1']) w.localStorage.setItem(k, '{"items":{}}'); } });
   await abrirPractica(a);
   a.$('pr-stats-ir').click();
   await esperar(() => a.$('pr-reiniciar'), 'botón Empezar de cero');
@@ -1240,7 +1241,7 @@ test('EMPEZAR DE CERO: sin contraseña borra solo este dispositivo; con contrase
   a.$('pr-reiniciar').click();
   await esperar(() => /Aún no hay práctica/.test(a.$('pr-stats')?.textContent || ''), 'historial vacío');
   assert.deepEqual(JSON.parse(a.w.localStorage.getItem('repertorio-practica-v1')), { servidor: [], pend: [], apartadas: [] });
-  assert.equal(a.w.localStorage.getItem('repertorio-retos-v1'), null, 'también las estadísticas de Reconocer');
+  for (const k of ['repertorio-reconocer-v1', 'repertorio-prog-v1', 'repertorio-esc-v1', 'repertorio-retos-v1']) assert.equal(a.w.localStorage.getItem(k), null, 'también ' + k);
   sinErrores(a);
 
   // b) con contraseña: el servidor también queda vacío

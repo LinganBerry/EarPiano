@@ -256,16 +256,16 @@
       el('div', { className: 'est-tema-cab' }, el('b', {}, N.TEMAS[x.tema].nombre + ' · nivel ' + x.nivel), el('span', {}, pct(p) + ' · ' + x.t.n + ' preguntas')),
       el('div', { className: 'est-medidor', rol: 'img', 'aria-label': 'Acierto reciente ' + pct(p) }, el('span', { style: 'width:' + Math.round((p || 0) * 100) + '%;background:' + colorPct(p) })));
   }
-  // Empezar el historial de cero: sesiones (servidor y este dispositivo) y estadísticas de Reconocer acordes. No se puede deshacer.
+  // Empezar el historial de cero: sesiones (servidor y este dispositivo) y estadísticas locales de Reconocer, Progresiones, Escalas y Retos. No se puede deshacer.
   async function reiniciarHistorial() {
     const n = todas().length, conPase = !!token();
-    if (!confirm('¿Empezar el historial de cero?\n\nSe borran ' + n + ' sesiones de práctica ' + (conPase ? 'del servidor y de este dispositivo' : 'de este dispositivo') + ' y las estadísticas de Reconocer acordes. No se puede deshacer.')) return;
+    if (!confirm('¿Empezar el historial de cero?\n\nSe borran ' + n + ' sesiones de práctica ' + (conPase ? 'del servidor y de este dispositivo' : 'de este dispositivo') + ' y las estadísticas de Reconocer acordes, Progresiones y Escalas de este dispositivo. No se puede deshacer.')) return;
     if (conPase) {
       const r = await llamar('reiniciar', { confirmar: 'EMPEZAR-DE-CERO' });
       if (!r.ok) { alert('No se pudo borrar en el servidor (' + (r.j.error || 'error') + '). No se cambió nada.'); return; }
     }
     datos.servidor = []; datos.pend = []; datos.apartadas = []; persistir();
-    try { localStorage.removeItem('repertorio-retos-v1'); } catch (e) { /* nada */ }
+    for (const k of ['repertorio-reconocer-v1', 'repertorio-prog-v1', 'repertorio-esc-v1', 'repertorio-retos-v1']) { try { localStorage.removeItem(k); } catch (e) { /* nada */ } }
     sync = { estado: conPase ? 'ok' : 'local', texto: '' };
     pintarEstadisticas();
   }

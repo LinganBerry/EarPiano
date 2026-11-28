@@ -35,12 +35,25 @@
   }
   const calidadesDe = op => (op.calidad === 'M' ? ['M'] : op.calidad === 'm' ? ['m'] : ['M', 'm']);
   // Retos que fallas (y que encajan con lo que elegiste ahora), con más peso mientras más los has fallado.
+  // Repaso espaciado: si un reto tiene historial por día (x.h), solo cuenta como "para repasar" cuando ya toca (repaso.js) y lo has fallado alguna vez,
+  // con más peso mientras más atrasado. Los retos sin historial por día (datos viejos) siguen con el criterio de antes: 80 % de aciertos.
+  const hoyLocal = () => new Date().toLocaleDateString('en-CA');   // AAAA-MM-DD en tu zona horaria
+  function vencimientos(est, hoy) {
+    if (!raiz.Repaso) return null;
+    const ses = [];
+    for (const [item, x] of Object.entries(est.items)) if (Array.isArray(x.h)) for (const [f, ok] of x.h) ses.push({ f, q: [[item, ok, 0]] });
+    return ses.length ? raiz.Repaso.calcular(ses, hoy) : null;
+  }
   function debiles(est, op = {}) {
-    const cals = calidadesDe(op), out = [];
+    const cals = calidadesDe(op), out = [], rep = vencimientos(est, op.hoy || hoyLocal());
     for (const [item, x] of Object.entries(est.items)) {
-      if (!describir(item) || x.v - x.a < 1 || x.a / x.v >= 0.8) continue;
+      if (!describir(item)) continue;
+      const r = rep && Array.isArray(x.h) && rep[item];
+      let peso;
+      if (r) { if (r.atraso < 0 || r.fallos < 1) continue; peso = 2 + Math.min(r.atraso, 7) * 0.5 + (r.racha === 0 ? 1 : 0); }
+      else { if (x.v - x.a < 1 || x.a / x.v >= 0.8) continue; peso = x.v - x.a; }
       const [nombre, calidad, inv] = item.split('|');
-      if (cals.includes(calidad) && (op.inversiones || Number(inv) === 0)) out.push({ item, nombre, calidad, inv: Number(inv), peso: x.v - x.a });
+      if (cals.includes(calidad) && (op.inversiones || Number(inv) === 0)) out.push({ item, nombre, calidad, inv: Number(inv), peso });
     }
     return out;
   }
@@ -71,6 +84,7 @@
   }
 
   // --- estadísticas (por reto: veces, aciertos, suma de milisegundos de los aciertos, mejor tiempo) ---
+  const MAX_DIAS = 20;   // días de historial que se conservan por reto (h: [[fecha, 1|0], ...]; un día cuenta como acierto solo si todo ese día fue acierto)
   const vacias = () => ({ items: {} });
   const numero = x => (Number.isFinite(x) && x >= 0 ? Math.min(x, 1e9) : 0);
   function limpiar(raw) {
@@ -80,13 +94,21 @@
       if (!describir(k) || !x || typeof x !== 'object') continue;
       const v = numero(x.v), a = Math.min(numero(x.a), v);
       est.items[k] = { v, a, ms: numero(x.ms), mejor: numero(x.mejor) };
+      const h = Array.isArray(x.h) ? x.h.filter(e => Array.isArray(e) && typeof e[0] === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(e[0]) && (e[1] === 0 || e[1] === 1)).slice(-MAX_DIAS).map(e => [e[0], e[1]]) : [];
+      if (h.length) est.items[k].h = h;
     }
     return est;
   }
-  function registrar(est, item, bien, ms) {
+  // hoy ('AAAA-MM-DD') es opcional: si se pasa, también se guarda el resultado del día para el repaso espaciado.
+  function registrar(est, item, bien, ms, hoy) {
     const x = est.items[item] || (est.items[item] = { v: 0, a: 0, ms: 0, mejor: 0 });
     x.v++;
     if (bien) { x.a++; if (ms > 0) { x.ms += ms; x.mejor = x.mejor ? Math.min(x.mejor, ms) : ms; } }
+    if (typeof hoy === 'string') {
+      const h = x.h || (x.h = []), ult = h[h.length - 1];
+      if (ult && ult[0] === hoy) ult[1] = ult[1] && bien ? 1 : 0; else h.push([hoy, bien ? 1 : 0]);
+      if (h.length > MAX_DIAS) h.splice(0, h.length - MAX_DIAS);
+    }
     return est;
   }
   function resumen(est) {
@@ -97,7 +119,7 @@
     return { v, a, repasar, lentos };
   }
 
-  const api = { RAICES, POSICIONES, acorde, posicion, crearReto, debiles, describir, vacias, limpiar, registrar, resumen, CFG: { guardia: 350, escala: 1 } };
+  const api = { RAICES, POSICIONES, acorde, posicion, crearReto, debiles, describir, vacias, limpiar, registrar, resumen, hoy: hoyLocal, CFG: { guardia: 350, escala: 1 } };
   raiz.Retos = api;
   if (typeof document === 'undefined') return;
 
@@ -200,7 +222,7 @@
   function responder(bien) {
     if (!ses || ses.fase === 'pregunta' || enGuardia()) return;
     const r = ses.reto, cuenta = bien && ses.fase === 'toque';
-    registrar(est, r.item, cuenta, ses.ms); guardar(EST, est);
+    registrar(est, r.item, cuenta, ses.ms, hoyLocal()); guardar(EST, est);
     ses.hechas.push({ item: r.item, nombre: r.nombre, corta: r.corta, bien: cuenta, ms: ses.ms });
     siguiente();
   }
